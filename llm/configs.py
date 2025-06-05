@@ -15,7 +15,6 @@ vllm_image = (
     )
 )
 
-MODELS_DIR = "/model_weights"
 MODEL_NAME = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic"
 MODEL_REVISION = "3f96d104cdf17d4697995d2848efe6d313494ce5"
 
