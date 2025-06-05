@@ -10,7 +10,7 @@ vllm_image = (
     .env(
         {
             "HF_HUB_ENABLE_HF_TRANSFER": "1",
-            "VLLM_USE_V1": "1", 
+            "VLLM_USE_V1": "1",
         }
     )
 )
@@ -22,10 +22,7 @@ MODEL_REVISION = "3f96d104cdf17d4697995d2848efe6d313494ce5"
 hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
 vllm_cache_vol = modal.Volume.from_name("vllm-cache", create_if_missing=True)
 
-
 N_GPU = 1
-API_KEY = modal.secret.Secret("vllm_api_key")
-
-MINUTE = 60 
-
+API_KEY = modal.Secret.from_name("vibe-shopping-secrets", required_keys=["API_KEY"])
+MINUTE = 60
 VLLM_PORT = 8000

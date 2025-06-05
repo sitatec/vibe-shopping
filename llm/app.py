@@ -14,6 +14,7 @@ from configs import (
 
 app = modal.App("vibe-shopping-llm")
 
+
 @app.function(
     image=vllm_image,
     gpu=f"H100:{N_GPU}",
@@ -26,6 +27,7 @@ app = modal.App("vibe-shopping-llm")
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
     },
+    secrets=[API_KEY],
 )
 @modal.concurrent(
     max_inputs=50  # maximum number of concurrent requests per aut-scaling replica
@@ -33,6 +35,7 @@ app = modal.App("vibe-shopping-llm")
 @modal.web_server(port=VLLM_PORT, startup_timeout=5 * MINUTE)
 def serve():
     import subprocess
+    import os
 
     cmd = [
         "vllm",
@@ -46,7 +49,7 @@ def serve():
         "--port",
         str(VLLM_PORT),
         "--api-key",
-        API_KEY,
+        os.environ["API_KEY"],
     ]
 
     subprocess.Popen(" ".join(cmd), shell=True)
