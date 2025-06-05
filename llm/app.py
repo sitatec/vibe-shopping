@@ -44,6 +44,19 @@ def serve():
         MODEL_NAME,
         "--revision",
         MODEL_REVISION,
+        "--tokenizer-mode",
+        "mistral",
+        "--config-format",
+        "mistral",
+        "--load-format",
+        "mistral",
+        "--tool-call-parser",
+        "mistral",
+        "--enable-auto-tool-choice",
+        "--limit-mm-per-prompt",
+        "image=5",
+        "--tensor-parallel-size",
+        str(N_GPU),
         "--host",
         "0.0.0.0",
         "--port",
@@ -52,4 +65,4 @@ def serve():
         os.environ["API_KEY"],
     ]
 
-    subprocess.Popen(" ".join(cmd), shell=True)
+    subprocess.Popen(cmd)
