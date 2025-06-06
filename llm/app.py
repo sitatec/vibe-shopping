@@ -12,12 +12,15 @@ from configs import (
 )
 
 
-app = modal.App("vibe-shopping-llm")
+app = modal.App("vibe-shopping")
 
 
 @app.function(
+    name="vibe-shopping-llm",
     image=vllm_image,
     gpu=f"H100:{N_GPU}",
+    cpu=5, # 10vCPUs
+    memory=16,  # 16 GB RAM
     scaledown_window=(
         1 * MINUTE
         # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
