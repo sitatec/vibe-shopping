@@ -1,10 +1,8 @@
+from io import BytesIO
 from typing import Callable, cast
 
 import modal
-from configs import (
-    image,
-    modal_class_config
-)
+from configs import image, modal_class_config
 
 with image.imports():
     import torch
@@ -48,7 +46,7 @@ class VirtualTryModel:
 
         self.auto_masker = AutoInpaintMaskGenerator()
 
-    def get_preprocessors(
+    def _get_preprocessors(
         self, input_size: tuple[int, int], target_megapixels: float = 1.0
     ) -> tuple[TransformType, TransformType, tuple[int, int]]:
         num_pixels = int(target_megapixels * 1024 * 1024)
@@ -82,37 +80,49 @@ class VirtualTryModel:
         )
         return transform, mask_transform, (new_width, new_height)
 
+    def _bytes_to_image(self, byte_stream: bytes, mode: str = "RGB") -> Image.Image:
+        """Convert bytes to PIL Image."""
+        return Image.open(BytesIO(byte_stream)).convert(mode)
+
     @modal.method()
     def try_it(
         self,
-        item_to_try: Image.Image,
-        image: Image.Image,
-        mask: Image.Image | np.ndarray | None = None,
+        image_bytes: bytes,
+        item_to_try_bytes: bytes,
+        mask_bytes: bytes | None = None,
         prompt: str | None = None,
         masking_prompt: str | None = None,
-    ) -> Image.Image:
-        assert mask or masking_prompt, "Either mask or masking_prompt must be provided."
-
-        preprocessor, mask_preprocessor, output_size = self.get_preprocessors(
-            input_size=image.size,
-            target_megapixels=0.7,  # The image will be stacked which will double the pixel count
+    ) -> bytes:
+        # We are using bytes for images for serialization/deserialization
+        # during Modal function calls.
+        assert mask_bytes or masking_prompt, (
+            "Either mask or masking_prompt must be provided."
         )
 
-        if mask is None:
-            # Generate mask using the auto-masker
+        image = self._bytes_to_image(image_bytes)
+        item_to_try = self._bytes_to_image(item_to_try_bytes)
+
+        if mask_bytes:
+            mask = self._bytes_to_image(mask_bytes, mode="L")
+        else:
             mask = self.auto_masker.generate_mask(
                 image,
                 prompt=masking_prompt,  # type: ignore
             )
 
+        preprocessor, mask_preprocessor, output_size = self._get_preprocessors(
+            input_size=image.size,
+            target_megapixels=0.7,  # The image will be stacked which will double the pixel count
+        )
+
         image_tensor = preprocessor(image.convert("RGB"))
         item_to_try_tensor = preprocessor(item_to_try.convert("RGB"))
         mask_tensor = mask_preprocessor(mask)
 
-        # Create concatenated images
+        # Create concatenated images along the width axis
         inpaint_image = torch.cat(
             [item_to_try_tensor, image_tensor], dim=2
-        )  # Concatenate along width
+        ) 
         extended_mask = torch.cat([torch.zeros_like(mask_tensor), mask_tensor], dim=2)
 
         prompt = prompt or (
@@ -134,4 +144,7 @@ class VirtualTryModel:
             prompt=prompt,
         ).images[0]
 
-        return result.crop((width, 0, width * 2, height))
+        output_image = result.crop((width, 0, width * 2, height))
+        byte_stream = BytesIO()
+        output_image.save(byte_stream, format="WEBP", quality=90)
+        return byte_stream.getvalue()
