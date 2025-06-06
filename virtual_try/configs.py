@@ -18,4 +18,19 @@ image = (
 hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
 API_KEY = modal.Secret.from_name("vibe-shopping-secrets", required_keys=["VT_API_KEY"])
 MINUTE = 60
-PORT = 8000
+
+modal_class_config = {
+    "image": image,
+    "gpu": "A100-40GB",
+    "cpu": 4,  # 8vCPUs
+    "memory": 16,  # 16 GB RAM
+    "volumes": {
+        "/root/.cache/huggingface": hf_cache_vol,
+    },
+    "secrets": [API_KEY],
+    "scaledown_window": (
+        1 * MINUTE
+        # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
+    ),
+    "timeout": 10 * MINUTE,  # how long should we wait for container start?
+}

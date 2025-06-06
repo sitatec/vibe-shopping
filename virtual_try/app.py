@@ -3,10 +3,7 @@ from typing import Callable, cast
 import modal
 from configs import (
     image,
-    hf_cache_vol,
-    API_KEY,
-    MINUTE,
-    PORT,
+    modal_class_config
 )
 
 with image.imports():
@@ -26,21 +23,7 @@ with image.imports():
 app = modal.App("vibe-shopping")
 
 
-@app.cls(
-    image=image,
-    gpu="A100-40GB",
-    cpu=4,  # 8vCPUs
-    memory=16,  # 16 GB RAM
-    volumes={
-        "/root/.cache/huggingface": hf_cache_vol,
-    },
-    secrets=[API_KEY],
-    scaledown_window=(
-        1 * MINUTE
-        # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
-    ),
-    timeout=10 * MINUTE,  # how long should we wait for container start?
-)
+@app.cls(**modal_class_config)
 class VirtualTryModel:
     @modal.enter()
     def enter(self):
