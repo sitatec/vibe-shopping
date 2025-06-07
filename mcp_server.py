@@ -115,4 +115,4 @@ def try_item_with_auto_masking(
 
 if __name__ == "__main__":
     # Run the MCP server
-    mcp.run(transport="stdio")
+    mcp.run()
