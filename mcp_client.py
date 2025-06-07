@@ -21,9 +21,19 @@ if TYPE_CHECKING:
 
 
 class MCPClient:
-    def __init__(self):
+    def __init__(self, unique_name: str):
+        """Initialize the MCP client.
+        Args:
+            unique_name: The name of the client, serves as Namespace to prevent conflicts with function names
+            if multiple mcp servers expose tools with the same name.
+            Also used to identify the client that need to handle the call.
+            Keep it short and descriptive as it will be added to the tool name before passing
+            it to the LLM. e.g: "FileSystem", "Agora", "Amazon", etc.
+            The tool names will be something like "FileSystem.list_files",
+        """
         self.session: ClientSession | None = None
         self.exit_stack = AsyncExitStack()
+        self.name = unique_name
 
     def ensure_initialized(self):
         if not self.session:
@@ -40,13 +50,25 @@ class MCPClient:
             ChatCompletionToolParam(
                 type="function",
                 function=FunctionDefinition(
-                    name=tool.name,
+                    name=f"{self.name}.{tool.name}",
                     description=tool.description or "",
                     parameters=tool.inputSchema,
                 ),
             )
             for tool in response.tools
         ]
+
+    def owns_tool(self, tool_name: str) -> bool:
+        """
+        Whether the tool belongs to this client's server or not
+        Args:
+            tool_name: The name of the tool to check.
+
+        Returns:
+            bool: True if the tool belongs to this client's server, False otherwise.
+        """
+        self.ensure_initialized()
+        return tool_name.startswith(f"{self.name}.")
 
     async def connect_to_server(
         self,
