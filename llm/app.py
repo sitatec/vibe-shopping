@@ -57,7 +57,7 @@ def serve():
         "mistral",
         "--enable-auto-tool-choice",
         "--limit-mm-per-prompt",
-        "image=5",
+        "image=20",
         "--tensor-parallel-size",
         str(N_GPU),
         "--host",
