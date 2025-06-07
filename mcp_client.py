@@ -4,7 +4,13 @@ import json
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.types import CallToolResult
+from openai.types.chat import (
+    ChatCompletionToolParam,
+    ChatCompletionContentPartImageParam,
+    ChatCompletionContentPartTextParam,
+)
+from openai.types.chat.chat_completion_content_part_image_param import ImageURL
+from openai.types.shared_params import FunctionDefinition
 
 if TYPE_CHECKING:
     from mcp.types import CallToolResult, TextContent, ImageContent
@@ -15,9 +21,7 @@ if TYPE_CHECKING:
 
 
 class MCPClient:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.session: ClientSession | None = None
         self.exit_stack = AsyncExitStack()
 
@@ -30,7 +34,19 @@ class MCPClient:
     @property
     async def tools(self):
         self.ensure_initialized()
-        return await self.session.list_tools()  # type: ignore
+        response = await self.session.list_tools()  # type: ignore
+
+        return [
+            ChatCompletionToolParam(
+                type="function",
+                function=FunctionDefinition(
+                    name=tool.name,
+                    description=tool.description or "",
+                    parameters=tool.inputSchema,
+                ),
+            )
+            for tool in response.tools
+        ]
 
     async def connect_to_server(
         self,
@@ -54,10 +70,9 @@ class MCPClient:
 
         await self.session.initialize()
 
-        response = await self.session.list_tools()
         print(
             "\nConnected successfully! \nAvailable tools:",
-            [tool.name for tool in response.tools],
+            [tool.function.name for tool in await self.tools],  # type: ignore
             "\n",
         )
 
@@ -91,13 +106,14 @@ class MCPClient:
         contents: list[ChatCompletionContentPartParam] = []
         for content in response.content:
             if isinstance(content, TextContent):
-                contents.append({"type": "text", "text": content.text})
+                contents.append(
+                    ChatCompletionContentPartTextParam(type="text", text=content.text)
+                )
             elif isinstance(content, ImageContent):
                 contents.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": content.data},
-                    }
+                    ChatCompletionContentPartImageParam(
+                        type="image_url", image_url=ImageURL(url=content.data)
+                    )
                 )
             else:
                 raise ValueError(f"Unsupported content type: {content.type}")
@@ -110,6 +126,17 @@ class MCPClient:
 
 
 class AgoraMCPClient(MCPClient):
+    fields_to_remove = [
+        # The date for priceHistory is always empty, so not very useful.
+        "priceHistory",
+        # The scores below are related to embeddings, we want our LLM to decide which item is more relevant
+        # based user request and chat history.
+        "_adjustedScore",
+        "_combinedScoreData",
+        "_rankingScore",
+        "agoraScore",
+    ]
+
     async def post_tool_call(
         self,
         call_id: str,
@@ -131,32 +158,23 @@ class AgoraMCPClient(MCPClient):
         products: list[dict[str, Any]] = json_data["Products"]
         for product in products:
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
-            for key in [
-                # The date for priceHistory is always empty, so not very useful.
-                "priceHistory",
-                # The scores below are related to embeddings, we want our LLM to decide which item is more relevant
-                # based user request and chat history.
-                "_adjustedScore",
-                "_combinedScoreData",
-                "_rankingScore",
-                "agoraScore",
-            ]:
+            for key in self.fields_to_remove:
                 del product[key]
             # We add the product data first then show its image if available.
             new_content.append({"type": "text", "text": json.dumps(product)})
             if product.get("images"):
                 new_content.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": product["images"][0]},
-                    }
+                    ChatCompletionContentPartImageParam(
+                        type="image_url",
+                        image_url=ImageURL(url=product["images"][0]),
+                    )
                 )
             else:
                 new_content.append(
-                    {
-                        "type": "text",
-                        "text": f'No image available for "{product["name"]}" with ID {product.get("_id")}.',
-                    }
+                    ChatCompletionContentPartTextParam(
+                        type="text",
+                        text=f'No image available for "{product["name"]}" with ID {product.get("_id")}.',
+                    )
                 )
 
         return new_content
