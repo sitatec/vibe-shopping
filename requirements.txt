@@ -1,3 +1,4 @@
 mcp>=1.9.3
 modal>=1.0.3
 openai>=1.84.0
+uv

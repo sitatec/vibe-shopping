@@ -148,7 +148,7 @@ class MCPClient:
 
 
 class AgoraMCPClient(MCPClient):
-    fields_to_remove = [
+    FIELDS_TO_REMOVE = [
         # The date for priceHistory is always empty, so not very useful.
         "priceHistory",
         # The scores below are related to embeddings, we want our LLM to decide which item is more relevant
@@ -180,7 +180,7 @@ class AgoraMCPClient(MCPClient):
         products: list[dict[str, Any]] = json_data["Products"]
         for product in products:
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
-            for key in self.fields_to_remove:
+            for key in self.FIELDS_TO_REMOVE:
                 del product[key]
             # We add the product data first then show its image if available.
             new_content.append({"type": "text", "text": json.dumps(product)})
