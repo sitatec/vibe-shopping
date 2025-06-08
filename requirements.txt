@@ -4,3 +4,4 @@ openai>=1.84.0
 uv
 kokoro>=0.9.4
 misaki[zh,ja,en]
+stream2sentence>=0.3.1

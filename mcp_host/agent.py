@@ -1,16 +1,23 @@
+import json
 import os
+from typing import AsyncGenerator, Generator
 
 import numpy as np
-
-from mcp_client import MCPClient, AgoraMCPClient
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+    ChatCompletionToolMessageParam,
+    ChatCompletionMessageToolCallParam,
 )
+from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
+from openai.types.chat.chat_completion_message_tool_call_param import Function
 
+from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.stt import speech_to_text
+from mcp_host.tts import stream_text_to_speech
 
 
 class VibeShoppingAgent:
@@ -24,18 +31,29 @@ Instead, you can comment them, or ask the user opinion, just like a human would 
 If a tool requires an input that you don't have based on your knowledge and the conversation history, you should ask the user for it.
 """
 
-    def __init__(self, model_name: str = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic"):
+    def __init__(
+        self,
+        model_name: str = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic",
+        openai_api_key: str = os.getenv("OPENAI_API_KEY", ""),
+        openai_api_base_url: str = "TODO",
+    ):
         self.agora_client = AgoraMCPClient(unique_name="Agora")
         self.fewsats_client = MCPClient(unique_name="Fewsats")
         self.virtual_try_client = MCPClient(unique_name="VirtualTry")
         self.openai_client = OpenAI(
-            base_url="TODO",
-            api_key=os.getenv("VLLM_API_KEY", ""),
+            base_url=openai_api_base_url,
+            api_key=openai_api_key,
         )
         self.chat_history: list[ChatCompletionMessageParam] = [
             ChatCompletionSystemMessageParam(role="system", content=self.SYSTEM_PROMPT),
         ]
         self.model_name = model_name
+
+        self._mcp_clients = [
+            self.agora_client,
+            self.fewsats_client,
+            self.virtual_try_client,
+        ]
 
     async def connect_clients(self, fewsats_api_key: str | None = "FAKE_API_KEY"):
         await self.agora_client.connect_to_server("uvx", ["agora-mcp"])
@@ -44,11 +62,27 @@ If a tool requires an input that you don't have based on your knowledge and the 
         )
         await self.virtual_try_client.connect_to_server("python", ["./mcp_server.py"])
 
+        self.tools = (
+            await self.agora_client.tools
+            + await self.fewsats_client.tools
+            + await self.virtual_try_client.tools
+        )
+
+    def _get_mcp_client_for_tool(self, tool_name: str) -> MCPClient | None:
+        try:
+            # Iterate through the clients to find the one that owns the tool and stop at the first match
+            return next(
+                client for client in self._mcp_clients if client.owns_tool(tool_name)
+            )
+        except StopIteration:
+            return None
+
     async def chat(
         self,
         user_speech: tuple[int, np.ndarray],
         chat_history: list[ChatCompletionMessageParam],
-    ):
+        voice: str | None = None,
+    ) -> AsyncGenerator[np.ndarray, None]:
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
@@ -63,8 +97,88 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 content=user_text_message,
             )
         )
-        response = self.openai_client.chat.completions.create(
+        llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
             stream=True,
+            tools=self.tools,
+        )
+        pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
+        text_chunks: list[str] = []
+
+        def text_stream() -> Generator[str, None, None]:
+            for chunk in llm_stream:
+                delta = chunk.choices[0].delta
+
+                if delta.content:
+                    text_chunks.append(delta.content)
+                    yield delta.content
+
+                for tool_call in delta.tool_calls or []:
+                    index = tool_call.index
+
+                    if index not in pending_tool_calls:
+                        pending_tool_calls[index] = tool_call
+
+                    pending_tool_calls[
+                        index
+                    ].function.arguments += tool_call.function.arguments  # type: ignore
+
+        for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
+            yield ai_speech
+
+        tool_calls: list[ChatCompletionMessageToolCallParam] = []
+        tool_responses = []
+        for tool_call in pending_tool_calls.values():
+            assert tool_call.function is not None, "Tool call function must not be None"
+
+            call_id: str = tool_call.id  # type: ignore
+            tool_name: str = tool_call.function.name  # type: ignore
+            tool_args: str = tool_call.function.arguments  # type: ignore
+
+            tool_calls.append(  # type: ignore
+                ChatCompletionMessageToolCallParam(
+                    id=call_id,
+                    type="function",
+                    function=Function(name=tool_name, arguments=tool_args),
+                )
+            )
+
+            mcp_client = self._get_mcp_client_for_tool(tool_name)
+            if mcp_client is None:
+                print(f"Tool {tool_name} not found in any MCP client.")
+                tool_responses.append(
+                    ChatCompletionToolMessageParam(
+                        role="tool",
+                        tool_call_id=call_id,
+                        content=f"Unable to find tool '{tool_name}'.",
+                    )
+                )
+            else:
+                try:
+                    tool_response = await mcp_client.call_tool(
+                        call_id=call_id,
+                        tool_name=tool_name,
+                        tool_args=json.loads(tool_args) if tool_args else None,
+                    )
+                    tool_responses.append(tool_response)
+                except Exception as e:
+                    print(f"Error calling tool {tool_name}: {e}")
+                    tool_responses.append(
+                        ChatCompletionToolMessageParam(
+                            role="tool",
+                            tool_call_id=call_id,
+                            content=f"Error calling tool '{tool_name}', Error: {str(e)[:500]}",  # Limit error message length to avoid flooding the chat
+                        )
+                    )
+
+        chat_history.extend(
+            [
+                ChatCompletionAssistantMessageParam(
+                    role="assistant",
+                    content="".join(text_chunks),
+                    tool_calls=tool_calls,
+                ),
+                *tool_responses,
+            ]
         )

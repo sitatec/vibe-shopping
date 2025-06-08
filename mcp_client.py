@@ -15,7 +15,7 @@ from openai.types.shared_params import FunctionDefinition
 if TYPE_CHECKING:
     from mcp.types import CallToolResult, TextContent, ImageContent
     from openai.types.chat import (
-        ChatCompletionMessageParam,
+        ChatCompletionToolMessageParam,
         ChatCompletionContentPartParam,
     )
 
@@ -105,7 +105,7 @@ class MCPClient:
 
     async def call_tool(
         self, call_id: str, tool_name: str, tool_args: dict[str, Any] | None = None
-    ) -> ChatCompletionMessageParam:
+    ) -> ChatCompletionToolMessageParam:
         self.ensure_initialized()
 
         tool_name, tool_args = await self.pre_tool_call(call_id, tool_name, tool_args)
@@ -115,8 +115,8 @@ class MCPClient:
         return {
             "role": "tool",
             "tool_call_id": call_id,
-            "content": content,
-        }  # type: ignore
+            "content": content, # type: ignore
+        } 
 
     async def post_tool_call(
         self,
