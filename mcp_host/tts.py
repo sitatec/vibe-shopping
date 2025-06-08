@@ -6,7 +6,7 @@ import spaces
 from kokoro import KPipeline, KModel
 from stream2sentence import generate_sentences
 
-__all__ = ["stream_text_to_speech", "get_standard_lang_for_voice"]
+__all__ = ["stream_text_to_speech"]
 
 VOICES = {
     # American English
