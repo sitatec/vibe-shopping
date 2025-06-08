@@ -1,11 +1,12 @@
-from typing import Generator
+from typing import Generator, Iterator
 
 import numpy as np
 import torch
 import spaces
 from kokoro import KPipeline, KModel
+from stream2sentence import generate_sentences
 
-__all__ = ["text_to_speech"]
+__all__ = ["stream_text_to_speech", "get_standard_lang_for_voice"]
 
 VOICES = {
     # American English
@@ -38,6 +39,18 @@ VOICES = {
     "PT🇧🇷 Santa 👨": "pm_santa",
 }
 
+KOKORO_TO_STD_LANG = {
+    "a": "en",
+    "b": "en",
+    "e": "es",
+    "f": "fr",
+    "h": "hi",
+    "i": "it",
+    "j": "ja",
+    "p": "pt",
+    "z": "zh",
+}
+
 device = 0 if torch.cuda.is_available() else "cpu"
 model = KModel().to(device).eval()
 
@@ -62,22 +75,29 @@ for voice_code in VOICES.values():
     if lang_code in pipes:
         pipes[lang_code].load_voice(voice_code)
 
-@spaces.GPU(duration=10)
-def text_to_speech(text: str, voice: str = "af_heart") -> Generator[np.ndarray, None, None]:
+
+@spaces.GPU(duration=20)
+def stream_text_to_speech(
+    text_stream: Iterator[str], voice: str | None = None
+) -> Generator[np.ndarray, None, None]:
     """
     Convert text to speech using the specified voice.
-    
+
     Args:
         text (str): The text to convert to speech.
         voice (str): The voice to use for the conversion. Default to af_heart
-    
+
     Returns:
         np.ndarray: The audio as a NumPy array.
     """
+    voice = voice or "af_heart"
     if voice not in VOICES:
         raise ValueError(f"Voice '{voice}' is not available.")
     
-    pipe = pipes[voice[0]]
+    kokoro_lang = voice[0]
+    standard_lang_code = KOKORO_TO_STD_LANG.get(kokoro_lang, "en")
+    pipe = pipes[kokoro_lang]
 
-    for _, __, result in pipe(text, voice=voice):
-        yield result.audio.numpy()
+    for text in generate_sentences(text_stream, language=standard_lang_code):
+        for _, __, result in pipe(text, voice=voice):
+            yield result.audio.numpy()
