@@ -5,6 +5,7 @@ import torch
 import spaces
 from kokoro import KPipeline, KModel
 
+__all__ = ["text_to_speech"]
 
 VOICES = {
     # American English
