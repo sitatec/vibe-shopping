@@ -2,6 +2,7 @@ import asyncio
 
 import gradio as gr
 import numpy as np
+from PIL import Image
 from fastrtc import AdditionalOutputs, WebRTC, ReplyOnPause
 from openai.types.chat import ChatCompletionMessageParam
 
@@ -13,6 +14,22 @@ from mcp_host.ui import UI
 vibe_shopping_agent = VibeShoppingAgent()
 asyncio.run(vibe_shopping_agent.connect_clients())
 
+def handle_image_upload(image_with_mask: dict | None) -> tuple[Image.Image | None, Image.Image | None]:
+    if not image_with_mask:
+        return None, None
+    
+    # Extract image and mask from ImageEditor data
+    image = image_with_mask["background"]
+    mask = None
+    if "layers" in image_with_mask and len(image_with_mask["layers"]) > 0:
+        mask = image_with_mask["layers"][0]  # First layer contains the mask
+        
+        # Convert mask to a binary mask (white for masked area, black for unmasked)
+        mask_array = np.array(mask)
+        is_black = np.all(mask_array < 10, axis=2)
+        mask = Image.fromarray(((~is_black) * 255).astype(np.uint8))
+    
+    return image, mask
 
 async def handle_audio_stream(
     audio: tuple[int, np.ndarray],
@@ -20,7 +37,10 @@ async def handle_audio_stream(
     voice: str | None = None,
     displayed_products: list[dict] | None = None,
     displayed_image: str | None = None,
-):
+    image_with_mask: dict | None = None,
+):  
+    image, mask = handle_image_upload(image_with_mask)
+
     def update_ui(products, image, clear_ui):
         nonlocal displayed_products, displayed_image
         if clear_ui:
@@ -35,11 +55,15 @@ async def handle_audio_stream(
         chat_history=chat_history,
         voice=voice,
         update_ui=update_ui,
+        input_image=image,
+        input_mask=mask,
     ):
         # Yield the audio chunk to the WebRTC stream
         yield ai_speech
 
-    yield AdditionalOutputs(chat_history, displayed_products, displayed_image)
+    yield AdditionalOutputs(
+        chat_history, displayed_products, displayed_image, None
+    )  # None for resetting the input_image state
 
 
 with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
@@ -48,10 +72,10 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
     displayed_image = gr.State(value=None)
     with gr.Column():
         voice = gr.Dropdown(
-            label="AI Voice",
+            label="Language & Voice",
             choices=list(VOICES.items()),
             value=list(VOICES.items())[0],
-            info="Select a voice for the AI assistant.",
+            info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
             scale=0,
         )
         shopping_ui = UI(
@@ -64,6 +88,15 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             modality="audio",
             scale=0,
         )
+        with gr.Accordion(open=False, label="Input Image"):
+            gr.Markdown(
+                "Select an image to show to the AI assistant. You can click on the edit (🖌) icon and draw a mask. "
+                "Once you select the image you need to let the assistant know that you have done so, and tell it what you want to do with the image if it doesn't already know from the context of the conversation.\n\n"
+                "The mask is optional, but it can improve the quality of the results. If you notice that an object you virtually tried on is miss-placed or not fitting well, try adding a mask. "
+                "For example if you want to try trying on a shirt, draw a mask over the upper body of the person in the image. "
+                "If you want to see how a furniture looks in a room, draw a mask over the area where you want it to be placed... "
+            )
+            input_image = gr.ImageMask(type="pil")
 
     audio_stream.stream(
         ReplyOnPause(handle_audio_stream),  # type: ignore
@@ -73,12 +106,13 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             voice,
             displayed_products,
             displayed_image,
+            input_image,
         ],
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
         lambda s, a: (s, a),
-        outputs=[chat_history, displayed_products, displayed_image],
+        outputs=[chat_history, displayed_products, displayed_image, input_image],
         queue=False,
         show_progress="hidden",
     )

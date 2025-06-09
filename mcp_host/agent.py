@@ -3,6 +3,7 @@ import os
 from typing import AsyncGenerator, Callable, Generator
 
 import numpy as np
+from PIL import Image
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletionMessageParam,
@@ -12,14 +13,19 @@ from openai.types.chat import (
     ChatCompletionToolMessageParam,
     ChatCompletionMessageToolCallParam,
     ChatCompletionToolParam,
+    ChatCompletionContentPartParam,
+    ChatCompletionContentPartTextParam,
+    ChatCompletionContentPartImageParam,
 )
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from openai.types.chat.chat_completion_message_tool_call_param import Function
 from openai.types.shared_params import FunctionDefinition
+from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.stt import speech_to_text
 from mcp_host.tts import stream_text_to_speech
+from utils import ImageUploader
 
 
 class VibeShoppingAgent:
@@ -39,6 +45,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         model_name: str = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic",
         openai_api_key: str = os.getenv("OPENAI_API_KEY", ""),
         openai_api_base_url: str = "TODO",
+        image_uploader: ImageUploader = ImageUploader(),
     ):
         self.agora_client = AgoraMCPClient(unique_name="Agora")
         self.fewsats_client = MCPClient(unique_name="Fewsats")
@@ -59,6 +66,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
             self.virtual_try_client,
         ]
         self.display_tool = _build_display_tool_definition()
+        self.image_uploader = image_uploader
 
     async def connect_clients(self, fewsats_api_key: str | None = "FAKE_API_KEY"):
         await self.agora_client.connect_to_server("uvx", ["agora-mcp"])
@@ -92,6 +100,8 @@ If a tool requires an input that you don't have based on your knowledge and the 
             [list[dict[str, str]] | None, str | None, bool | None], None
         ],
         voice: str | None = None,
+        input_image: Image.Image | None = None,
+        input_mask: Image.Image | None = None,
     ) -> AsyncGenerator[np.ndarray, None]:
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
@@ -103,13 +113,26 @@ If a tool requires an input that you don't have based on your knowledge and the 
                     role="system", content=self.SYSTEM_PROMPT
                 )
             ]
-        )
+        ).copy()  # Ensure we don't modify the original history
+
+        user_message_contents: list[ChatCompletionContentPartParam] = []
+        if input_image is not None:
+            user_message_contents.extend(
+                self._build_input_image_content(input_image, "input_image")
+            )
+            if input_mask is not None:
+                user_message_contents.extend(
+                    self._build_input_image_content(input_mask, "input_mask")
+                )
 
         user_text_message = speech_to_text(user_speech)
+        user_message_contents.append(
+            ChatCompletionContentPartTextParam(type="text", text=user_text_message)
+        )
         chat_history.append(
             ChatCompletionUserMessageParam(
                 role="user",
-                content=user_text_message,
+                content=user_message_contents,
             )
         )
 
@@ -238,6 +261,26 @@ If a tool requires an input that you don't have based on your knowledge and the 
                             content=f"Error calling tool '{tool_name}', Error: {str(e)[:500]}",  # Limit error message length to avoid flooding the chat
                         )
                     )
+
+    def _build_input_image_content(
+        self, input_image: Image.Image, image_label: str
+    ) -> tuple[ChatCompletionContentPartTextParam, ChatCompletionContentPartImageParam]:
+        """
+        Build the input image content for the chat message.
+        """
+        image_url = self.image_uploader.upload_image(
+            input_image, f"{image_label}.{input_image.format or 'webp'}".lower()
+        )
+        return (
+            ChatCompletionContentPartTextParam(
+                type="text",
+                text=f"{image_label}_url: {image_url}\n{image_label}:",
+            ),
+            ChatCompletionContentPartImageParam(
+                type="image_url",
+                image_url=ImageURL(url=image_url),
+            ),
+        )
 
 
 def _build_display_tool_definition() -> ChatCompletionToolParam:
