@@ -18,9 +18,9 @@ image = (
 hf_cache_vol = modal.Volume.from_name(
     "huggingface-cache", create_if_missing=True, environment_name="vibe-shopping"
 )
-API_KEY = modal.Secret.from_name(
+SECRETS = modal.Secret.from_name(
     "vibe-shopping-secrets",
-    required_keys=["VT_API_KEY"],
+    required_keys=["VT_API_KEY", "HF_TOKEN"],
     environment_name="vibe-shopping",
 )
 MINUTE = 60
@@ -33,7 +33,7 @@ modal_class_config = {
     "volumes": {
         "/root/.cache/huggingface": hf_cache_vol,
     },
-    "secrets": [API_KEY],
+    "secrets": [SECRETS],
     "scaledown_window": (
         1 * MINUTE
         # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
