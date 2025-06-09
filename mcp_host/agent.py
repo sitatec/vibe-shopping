@@ -44,7 +44,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         self,
         model_name: str = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic",
         openai_api_key: str = os.getenv("OPENAI_API_KEY", ""),
-        openai_api_base_url: str = "TODO",
+        openai_api_base_url: str = os.getenv("OPENAI_API_BASE_URL", ""),
         image_uploader: ImageUploader = ImageUploader(),
     ):
         self.agora_client = AgoraMCPClient(unique_name="Agora")

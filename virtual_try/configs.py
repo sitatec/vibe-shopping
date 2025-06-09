@@ -1,18 +1,23 @@
 import modal
+from pathlib import Path
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
+    .apt_install("git")
     .pip_install(
         "torch==2.7.0",
         "torchvision",
         "diffusers==0.33.1",
         "transformers==4.52.4",
         "accelerate==1.7.0",
+        "opencv-python-headless",
         "huggingface_hub[hf_transfer]==0.32.4",
-        "git+https://github.com/luca-medeiros/lang-segment-anything.git@e9af744d999d85eb4d0bd59a83342ecdc2bd2461",
-        "https://github.com/mit-han-lab/nunchaku/releases/download/v0.3.0/nunchaku-0.3.0+torch2.7-cp312-cp312-linux_x86_64.whl#sha256=ed28665515075050c8ef1bacd16845b85aa4335f6c760d6fa716d3b090909d8d7",
+        "git+https://github.com/sitatec/lang-segment-anything.git",
+        "https://github.com/mit-han-lab/nunchaku/releases/download/v0.3.1dev20250609/nunchaku-0.3.1.dev20250609+torch2.7-cp312-cp312-linux_x86_64.whl#sha256=1518f6c02358545fd0336a6a74547e2c875603b381d5ce75b1664f981105b141",
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .add_local_file(str(Path(__file__).resolve()), "/root/configs.py")
+    .add_local_file(str(Path(__file__).parent / "auto_masker.py"), "/root/auto_masker.py")
 )
 
 hf_cache_vol = modal.Volume.from_name(
@@ -28,8 +33,6 @@ MINUTE = 60
 modal_class_config = {
     "image": image,
     "gpu": "A100-40GB",
-    "cpu": 4,  # 8vCPUs
-    "memory": 16,  # 16 GB RAM
     "volumes": {
         "/root/.cache/huggingface": hf_cache_vol,
     },

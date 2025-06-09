@@ -14,9 +14,9 @@ with image.imports():
     from nunchaku.utils import get_precision
     from nunchaku.lora.flux.compose import compose_lora
 
-    from virtual_try.auto_masker import AutoInpaintMaskGenerator
+    from auto_masker import AutoInpaintMaskGenerator
 
-    TransformType = Callable[[Image.Image | np.ndarray], torch.Tensor]
+TransformType = Callable[[Image.Image | np.ndarray], torch.Tensor]
 
 app = modal.App("vibe-shopping")
 
@@ -120,9 +120,7 @@ class VirtualTryModel:
         mask_tensor = mask_preprocessor(mask)
 
         # Create concatenated images along the width axis
-        inpaint_image = torch.cat(
-            [item_to_try_tensor, image_tensor], dim=2
-        ) 
+        inpaint_image = torch.cat([item_to_try_tensor, image_tensor], dim=2)
         extended_mask = torch.cat([torch.zeros_like(mask_tensor), mask_tensor], dim=2)
 
         prompt = prompt or (
@@ -148,3 +146,50 @@ class VirtualTryModel:
         byte_stream = BytesIO()
         output_image.save(byte_stream, format="WEBP", quality=90)
         return byte_stream.getvalue()
+
+
+###### ------ FOR TESTING PURPOSES ONLY ------ ######
+@app.local_entrypoint()
+def main(twice: bool = True):
+    import time
+    from pathlib import Path
+
+    test_data_dir = Path(__file__).parent / "test_data"
+    with open(test_data_dir / "target_image.jpg", "rb") as f:
+        target_image_bytes = f.read()
+    with open(test_data_dir / "item_to_try.jpg", "rb") as f:
+        item_to_try_bytes = f.read()
+    with open(test_data_dir / "item_to_try2.png", "rb") as f:
+        item_to_try_2_bytes = f.read()
+
+    prompt = (
+        "The pair of images highlights a clothing and its styling on a model, high resolution, 4K, 8K; "
+        "[IMAGE1] Detailed product shot of a clothing"
+        "[IMAGE2] The same cloth is worn by a model in a lifestyle setting."
+    )
+
+    t0 = time.time()
+    image_bytes = VirtualTryModel().try_it.remote(
+        prompt=prompt,
+        image_bytes=target_image_bytes,
+        item_to_try_bytes=item_to_try_bytes,
+        masking_prompt="t-shirt, arms, neck",
+    )
+    output_path = test_data_dir / "output1.jpg"
+    output_path.parent.mkdir(exist_ok=True, parents=True)
+    output_path.write_bytes(image_bytes)
+    print(f"🎨 first inference latency: {time.time() - t0:.2f} seconds")
+
+    if twice:
+        t0 = time.time()
+        image_bytes = VirtualTryModel().try_it.remote(
+            prompt=prompt,
+            image_bytes=target_image_bytes,
+            item_to_try_bytes=item_to_try_2_bytes,
+            masking_prompt="t-shirt, arms",
+        )
+        print(f"🎨 second inference latency: {time.time() - t0:.2f} seconds")
+
+        output_path = test_data_dir / "output2.jpg"
+        output_path.parent.mkdir(exist_ok=True, parents=True)
+        output_path.write_bytes(image_bytes)

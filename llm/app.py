@@ -59,6 +59,8 @@ def serve_llm():
         str(VLLM_PORT),
         "--api-key",
         os.environ["API_KEY"],
+        "--tensor-parallel-size",
+        str(N_GPU),
     ]
 
     subprocess.Popen(cmd)

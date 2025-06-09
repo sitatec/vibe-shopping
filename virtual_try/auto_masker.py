@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from PIL import Image
 from huggingface_hub import hf_hub_download
@@ -46,19 +47,26 @@ class AutoInpaintMaskGenerator:
         )[0]
 
         masks = result["masks"]  # (N, H, W)
-        scores = result["mask_scores"]  # (N,)
+        scores = np.atleast_1d(result["mask_scores"]) # Ensure it's always at least 1D
+
+        # If only one mask returned, expand dims
+        if masks.ndim == 2:
+            masks = masks[np.newaxis, :, :]  # Make it (1, H, W)
 
         if len(masks) == 0:
             raise ValueError("No masks found.")
 
         # Filter masks by score threshold
-        valid_indices = np.where(scores >= threshold)[0]
+        valid_indices = scores >= threshold
         if len(valid_indices) == 0:
             raise ValueError("No masks scored the required threshold.")
-
-        best_idx = valid_indices[np.argmax(scores[valid_indices])]
-        mask = masks[best_idx]
+        
+        combined_mask = np.any(masks[valid_indices], axis=0)
 
         # Convert to uint8 binary mask for inpainting
-        binary_mask = (mask.astype(np.uint8)) * 255  # 0 or 255
-        return binary_mask
+        binary_mask = (combined_mask.astype(np.uint8)) * 255  # 0 or 255
+
+        # Apply dilation
+        kernel = np.ones((10, 10), np.uint8)
+        dilated_mask = cv2.dilate(binary_mask, kernel, iterations=1)
+        return dilated_mask
