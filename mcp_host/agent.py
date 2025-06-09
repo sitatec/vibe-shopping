@@ -96,7 +96,12 @@ If a tool requires an input that you don't have based on your knowledge and the 
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
             # If no history is provided, start with the system prompt
-            chat_history or self.chat_history
+            chat_history
+            or [
+                ChatCompletionSystemMessageParam(
+                    role="system", content=self.SYSTEM_PROMPT
+                )
+            ]
         )
 
         user_text_message = speech_to_text(user_speech)
