@@ -3,6 +3,7 @@ from configs import (
     vllm_image,
     hf_cache_vol,
     vllm_cache_vol,
+    flashinfer_cache_volume,
     MODEL_NAME,
     MODEL_REVISION,
     MINUTE,
@@ -16,11 +17,8 @@ app = modal.App("vibe-shopping")
 
 
 @app.function(
-    name="vibe-shopping-llm",
     image=vllm_image,
     gpu=f"H100:{N_GPU}",
-    cpu=5, # 10vCPUs
-    memory=16,  # 16 GB RAM
     scaledown_window=(
         1 * MINUTE
         # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
@@ -29,14 +27,15 @@ app = modal.App("vibe-shopping")
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
+        "/root/.cache/flashinfer": flashinfer_cache_volume,
     },
     secrets=[API_KEY],
 )
 @modal.concurrent(
     max_inputs=50  # maximum number of concurrent requests per aut-scaling replica
 )
-@modal.web_server(port=VLLM_PORT, startup_timeout=5 * MINUTE)
-def serve():
+@modal.web_server(port=VLLM_PORT, startup_timeout=25 * MINUTE)
+def serve_llm():
     import subprocess
     import os
 
@@ -47,12 +46,6 @@ def serve():
         MODEL_NAME,
         "--revision",
         MODEL_REVISION,
-        "--tokenizer-mode",
-        "mistral",
-        "--config-format",
-        "mistral",
-        "--load-format",
-        "mistral",
         "--tool-call-parser",
         "mistral",
         "--enable-auto-tool-choice",
@@ -69,3 +62,50 @@ def serve():
     ]
 
     subprocess.Popen(cmd)
+
+
+###### ------ FOR TESTING PURPOSES ONLY ------ ######
+@app.local_entrypoint()
+def test(test_timeout=25 * MINUTE):
+    import os
+    import json
+    import time
+    import urllib
+    import dotenv
+
+    dotenv.load_dotenv()
+    if "OPENAI_API_KEY" not in os.environ:
+        raise ValueError("OPENAI_API_KEY environment variable is not set.")
+
+    print(f"Running health check for server at {serve_llm.get_web_url()}")
+    up, start, delay = False, time.time(), 10
+    while not up:
+        try:
+            with urllib.request.urlopen(serve_llm.get_web_url() + "/health") as response:
+                if response.getcode() == 200:
+                    up = True
+        except Exception:
+            if time.time() - start > test_timeout:
+                break
+            time.sleep(delay)
+
+    assert up, f"Failed health check for server at {serve_llm.get_web_url()}"
+
+    print(f"Successful health check for server at {serve_llm.get_web_url()}")
+
+    messages = [{"role": "user", "content": "Testing! Is this thing on?"}]
+    print(f"Sending a sample message to {serve_llm.get_web_url()}", *messages, sep="\n")
+
+    headers = {
+        "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}",
+        "Content-Type": "application/json",
+    }
+    payload = json.dumps({"messages": messages, "model": MODEL_NAME})
+    req = urllib.request.Request(
+        serve_llm.get_web_url() + "/v1/chat/completions",
+        data=payload.encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    with urllib.request.urlopen(req) as response:
+        print(json.loads(response.read().decode()))

@@ -1,7 +1,11 @@
 import modal
+from pathlib import Path
 
 vllm_image = (
-    modal.Image.debian_slim(python_version="3.12")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.8.0-devel-ubuntu22.04",
+        add_python="3.12",
+    )
     .pip_install(
         "vllm==0.9.0.1",
         "huggingface_hub[hf_transfer]==0.32.4",
@@ -13,6 +17,7 @@ vllm_image = (
             "VLLM_USE_V1": "1",
         }
     )
+    .add_local_file(str(Path(__file__).resolve()), "/root/configs.py")
 )
 
 MODEL_NAME = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic"
@@ -23,6 +28,9 @@ hf_cache_vol = modal.Volume.from_name(
 )
 vllm_cache_vol = modal.Volume.from_name(
     "vllm-cache", create_if_missing=True, environment_name="vibe-shopping"
+)
+flashinfer_cache_volume = modal.Volume.from_name(
+    "flashinfer-cache", create_if_missing=True, environment_name="vibe-shopping"
 )
 
 N_GPU = 1
