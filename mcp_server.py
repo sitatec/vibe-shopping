@@ -79,15 +79,15 @@ def try_item_with_auto_masking(
 ) -> "ImageContent":
     """
     Try an item on a target image by inpainting the item onto the target image using an auto-generated mask based on the masking_prompt.
-    For example, if the item is a wheel, and the target image a car, so the masking prompt would be "wheel" and the prompt should be something like:
-    The pair of images highlights a wheel and its fit on a car, high resolution, 4K, 8K;
-    [IMAGE1] Detailed product shot of a wheel
-    [IMAGE2] The same wheel is shown on a car in a realistic lifestyle setting.
-
-    If the item is a sofa and the target image is a living room containing a yellow sofa, the masking prompt could be "yellow sofa" and the prompt could be:
+    For example, if the item is a sofa and the target image is a living room containing a yellow sofa, the masking prompt could be "yellow sofa" and the prompt could be:
     The pair of images highlights a yellow sofa and how it fits in a living room, high resolution, 4K, 8K;
     [IMAGE1] Detailed product shot of a yellow sofa
     [IMAGE2] The same sofa is shown in a living room in a realistic lifestyle setting, the sofa fits in naturally with the room decor.
+
+    For cases where a similar item is present but masking it won't cover enough area for the item to be applied, if you can, you should use a composite mask prompt.
+    For example if the item is a long-sleeved shirt and the target image is a person wearing a short-sleeved t-shirt, the masking prompt could be "t-shirt, arms".
+    If the the item is a dress and the target image is a person wearing a t-shirt and jeans, the masking prompt could be "t-shirt, jeans, arms, legs".
+    Make sure the mask prompt include all the parts where the item will be applied to.
 
     This tool requires a similar item to be present in the target image, so it can generate a mask of the item using the masking_prompt.
 
@@ -95,7 +95,7 @@ def try_item_with_auto_masking(
         prompt: A prompt for the diffusion model to use for inpainting.
         item_image_url: URL of the item image to try.
         target_image_url: URL of the target image where the item will be tried.
-        masking_prompt: Prompt for generating a mask of the corresponding item in the target image. It need to be short and descriptive, e.g. "red dress", "blue sofa", "tire", etc.
+        masking_prompt: Prompt for generating a mask of the corresponding item in the target image. It need to be short and descriptive, e.g. "red dress", "blue sofa", "tire", "skirt, legs" etc.
 
     Returns:
         The image where the item is applied to the target image.
