@@ -15,8 +15,14 @@ image = (
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
 )
 
-hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
-API_KEY = modal.Secret.from_name("vibe-shopping-secrets", required_keys=["VT_API_KEY"])
+hf_cache_vol = modal.Volume.from_name(
+    "huggingface-cache", create_if_missing=True, environment_name="vibe-shopping"
+)
+API_KEY = modal.Secret.from_name(
+    "vibe-shopping-secrets",
+    required_keys=["VT_API_KEY"],
+    environment_name="vibe-shopping",
+)
 MINUTE = 60
 
 modal_class_config = {

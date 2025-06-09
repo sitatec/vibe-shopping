@@ -18,10 +18,16 @@ vllm_image = (
 MODEL_NAME = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic"
 MODEL_REVISION = "3f96d104cdf17d4697995d2848efe6d313494ce5"
 
-hf_cache_vol = modal.Volume.from_name("huggingface-cache", create_if_missing=True)
-vllm_cache_vol = modal.Volume.from_name("vllm-cache", create_if_missing=True)
+hf_cache_vol = modal.Volume.from_name(
+    "huggingface-cache", create_if_missing=True, environment_name="vibe-shopping"
+)
+vllm_cache_vol = modal.Volume.from_name(
+    "vllm-cache", create_if_missing=True, environment_name="vibe-shopping"
+)
 
 N_GPU = 1
-API_KEY = modal.Secret.from_name("vibe-shopping-secrets", required_keys=["API_KEY"])
+API_KEY = modal.Secret.from_name(
+    "vibe-shopping-secrets", required_keys=["API_KEY"], environment_name="vibe-shopping"
+)
 MINUTE = 60
 VLLM_PORT = 8000
