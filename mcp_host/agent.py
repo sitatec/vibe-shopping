@@ -1,6 +1,6 @@
 import json
 import os
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Callable, Generator
 
 import numpy as np
 from openai import OpenAI
@@ -11,9 +11,11 @@ from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
     ChatCompletionToolMessageParam,
     ChatCompletionMessageToolCallParam,
+    ChatCompletionToolParam,
 )
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from openai.types.chat.chat_completion_message_tool_call_param import Function
+from openai.types.shared_params import FunctionDefinition
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.stt import speech_to_text
@@ -40,6 +42,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         self.agora_client = AgoraMCPClient(unique_name="Agora")
         self.fewsats_client = MCPClient(unique_name="Fewsats")
         self.virtual_try_client = MCPClient(unique_name="VirtualTry")
+
         self.openai_client = OpenAI(
             base_url=openai_api_base_url,
             api_key=openai_api_key,
@@ -54,6 +57,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
             self.fewsats_client,
             self.virtual_try_client,
         ]
+        self.display_tool = _build_display_tool_definition()
 
     async def connect_clients(self, fewsats_api_key: str | None = "FAKE_API_KEY"):
         await self.agora_client.connect_to_server("uvx", ["agora-mcp"])
@@ -66,6 +70,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
             await self.agora_client.tools
             + await self.fewsats_client.tools
             + await self.virtual_try_client.tools
+            + [self.display_tool]
         )
 
     def _get_mcp_client_for_tool(self, tool_name: str) -> MCPClient | None:
@@ -81,6 +86,10 @@ If a tool requires an input that you don't have based on your knowledge and the 
         self,
         user_speech: tuple[int, np.ndarray],
         chat_history: list[ChatCompletionMessageParam],
+        # Update the UI with a list of products or an image from url, or clear the UI
+        update_ui: Callable[
+            [list[dict[str, str]] | None, str | None, bool | None], None
+        ],
         voice: str | None = None,
     ) -> AsyncGenerator[np.ndarray, None]:
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
@@ -97,6 +106,47 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 content=user_text_message,
             )
         )
+
+        while True:
+            tool_calls: list[ChatCompletionMessageToolCallParam] = []
+            tool_responses: list[ChatCompletionToolMessageParam] = []
+            text_chunks: list[str] = []
+
+            async for ai_speech in self._send_to_llm(
+                chat_history=chat_history,
+                voice=voice,
+                tool_calls=tool_calls,
+                tool_responses=tool_responses,
+                text_chunks=text_chunks,
+                update_ui=update_ui,
+            ):
+                yield ai_speech
+
+            chat_history.extend(
+                [
+                    ChatCompletionAssistantMessageParam(
+                        role="assistant",
+                        content="".join(text_chunks),
+                        tool_calls=tool_calls,
+                    ),
+                    *tool_responses,
+                ]
+            )
+
+            if not tool_responses:
+                break
+
+    async def _send_to_llm(
+        self,
+        chat_history: list[ChatCompletionMessageParam],
+        voice: str | None,
+        tool_calls: list[ChatCompletionMessageToolCallParam],
+        tool_responses: list[ChatCompletionToolMessageParam],
+        text_chunks: list[str],
+        update_ui: Callable[
+            [list[dict[str, str]] | None, str | None, bool | None], None
+        ],
+    ) -> AsyncGenerator[np.ndarray, None]:
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
@@ -104,7 +154,6 @@ If a tool requires an input that you don't have based on your knowledge and the 
             tools=self.tools,
         )
         pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
-        text_chunks: list[str] = []
 
         def text_stream() -> Generator[str, None, None]:
             for chunk in llm_stream:
@@ -127,8 +176,6 @@ If a tool requires an input that you don't have based on your knowledge and the 
         for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
             yield ai_speech
 
-        tool_calls: list[ChatCompletionMessageToolCallParam] = []
-        tool_responses = []
         for tool_call in pending_tool_calls.values():
             assert tool_call.function is not None, "Tool call function must not be None"
 
@@ -156,11 +203,25 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 )
             else:
                 try:
-                    tool_response = await mcp_client.call_tool(
-                        call_id=call_id,
-                        tool_name=tool_name,
-                        tool_args=json.loads(tool_args) if tool_args else None,
-                    )
+                    if tool_name == "display":
+                        # Handle the display tool separately
+                        args = json.loads(tool_args) if tool_args else {}
+                        update_ui(
+                            args.get("products"),
+                            args.get("image_url"),
+                            args.get("clear_ui"),
+                        )
+                        tool_response = ChatCompletionToolMessageParam(
+                            role="tool",
+                            tool_call_id=call_id,
+                            content="Content displayed successfully.",
+                        )
+                    else:
+                        tool_response = await mcp_client.call_tool(
+                            call_id=call_id,
+                            tool_name=tool_name,
+                            tool_args=json.loads(tool_args) if tool_args else None,
+                        )
                     tool_responses.append(tool_response)
                 except Exception as e:
                     print(f"Error calling tool {tool_name}: {e}")
@@ -172,13 +233,44 @@ If a tool requires an input that you don't have based on your knowledge and the 
                         )
                     )
 
-        chat_history.extend(
-            [
-                ChatCompletionAssistantMessageParam(
-                    role="assistant",
-                    content="".join(text_chunks),
-                    tool_calls=tool_calls,
-                ),
-                *tool_responses,
-            ]
-        )
+
+def _build_display_tool_definition() -> ChatCompletionToolParam:
+    return ChatCompletionToolParam(
+        type="function",
+        function=FunctionDefinition(
+            name="display",
+            description="""Show content to the user, or clear the UI if none of the inputs are provided.
+You can use this tool whenever you want to show tool results or when the user requests to see something that you have access to, like a list of products, specific product(s) from the conversation history, an image, or cart items.
+
+You can only pass one argument at a time, either products or image_url, or clear_ui.
+""",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "image_url": {"type": "string"},
+                                "price": {"type": "string"},
+                            },
+                            "required": ["name", "image_url", "price"],
+                        },
+                        "description": "A list of products to display from search results, cart items, or conversation history.",
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "description": "An optional URL of an image to display.",
+                    },
+                    "clear_ui": {
+                        "type": "boolean",
+                        "description": (
+                            "If true, clear the UI instead of displaying anything."
+                        ),
+                    },
+                },
+            },
+        ),
+    )
