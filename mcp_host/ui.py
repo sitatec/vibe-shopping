@@ -4,7 +4,8 @@ import gradio as gr
 def UI(products_state: gr.State, image_state: gr.State):
     ui_container = gr.HTML(
         # Placeholder for initial UI
-        FullSizeImage("/static/welcome-to-vibe-shopping.webp")
+        FullSizeImage("/static/welcome-to-vibe-shopping.webp"),
+        container=True,
     )
 
     if products_state.value:
@@ -71,12 +72,11 @@ def ProductList(products: list[dict[str, str]]):
 
     html = f"""
     <div style="
-        display: flex;
-        flex-wrap: nowrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
         gap: 1rem;
-        overflow-x: auto;
-        padding: 1rem 0;
-        max-height: 320px;
+        margin-top: 1rem;
+        height: 100%;
     ">
         {cards}
     </div>
