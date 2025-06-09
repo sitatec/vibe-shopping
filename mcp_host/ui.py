@@ -1,77 +1,112 @@
 import gradio as gr
 
 
-def ProductList(products_state: gr.State) -> gr.HTML:
-    product_html = gr.HTML()
+def UI(products_state: gr.State, image_state: gr.State):
+    ui_container = gr.HTML(
+        # Placeholder for initial UI
+        FullSizeImage("/static/welcome-to-vibe-shopping.webp")
+    )
 
-    def render_products(products: list[dict[str, str]]):
+    if products_state.value:
+        products_state.change(
+            fn=ProductList,
+            inputs=[products_state],
+            outputs=[ui_container],
+        )
+    elif image_state.value:
+        image_state.change(
+            fn=ImageDisplay,
+            inputs=[image_state],
+            outputs=[ui_container],
+        )
 
-        if not products:
-            return gr.update(value="")
+    return ui_container
 
-        cards = ""
-        for product in products:
-            name = product.get("name", "Unnamed Product")
-            price = product.get("price", "N/A")
-            image = product.get("image", "")
 
-            cards += f"""
-            <div style="
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                width: 180px;
-                flex-shrink: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            ">
-                <img src="{image}" alt="{name}" style="
-                    width: 100%;
-                    height: 120px;
-                    object-fit: cover;
-                    border-radius: 8px 8px 0 0;
-                " />
-                <div style="width: 100%; padding: 8px;">
-                    <h4 style="
-                        margin: 0 5px;
-                        font-size: 1rem;
-                        font-weight: 600;
-                        text-align: left;
-                    ">{name}</h4>
-                    <p style="
-                        margin: 0 8px;
-                        margin-top: 0.5rem;
-                        color: #2c3e50;
-                        font-weight: bold;
-                        font-size: 0.8rem;
-                        text-align: right;
-                    ">{price}</p>
-                </div>
-            </div>
-            """
+def ProductList(products: list[dict[str, str]]):
+    if not products:
+        return gr.update(value="")
 
-        html = f"""
+    cards = ""
+    for product in products:
+        name = product.get("name", "Unnamed Product")
+        price = product.get("price", "N/A")
+        image = product.get("image", "")
+
+        cards += f"""
         <div style="
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 180px;
+            flex-shrink: 0;
             display: flex;
-            flex-wrap: nowrap;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 1rem 0;
-            max-height: 320px;
+            flex-direction: column;
+            align-items: center;
         ">
-            {cards}
+            <img src="{image}" alt="{name}" style="
+                width: 100%;
+                height: 120px;
+                object-fit: cover;
+                border-radius: 8px 8px 0 0;
+            " />
+            <div style="width: 100%; padding: 8px;">
+                <h4 style="
+                    margin: 0 5px;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    text-align: left;
+                ">{name}</h4>
+                <p style="
+                    margin: 0 8px;
+                    margin-top: 0.5rem;
+                    color: #2c3e50;
+                    font-weight: bold;
+                    font-size: 0.8rem;
+                    text-align: right;
+                ">{price}</p>
+            </div>
         </div>
         """
 
-        return gr.update(value=html)
+    html = f"""
+    <div style="
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 1rem 0;
+        max-height: 320px;
+    ">
+        {cards}
+    </div>
+    """
 
-    products_state.change(
-        fn=render_products,
-        inputs=[products_state],
-        outputs=[product_html],
-        show_progress="hidden",
-        queue=False,
-    )
+    return gr.update(value=html)
 
-    return product_html
+
+def ImageDisplay(image_url: str):
+    if not image_url:
+        return gr.update(value="")
+
+    html = FullSizeImage(image_url)
+
+    return gr.update(value=html)
+
+
+def FullSizeImage(image_url):
+    return f"""
+    <div style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    ">
+        <img src="{image_url}" alt="Displayed Image" style="
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        " />
+    </div>
+    """
