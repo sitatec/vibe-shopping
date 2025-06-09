@@ -27,9 +27,8 @@ def virtual_try_model():
 
 def bytes_to_image(result_image_bytes: bytes, format: str = "webp") -> ImageContent:
     base64_image = base64.b64encode(result_image_bytes).decode("utf-8")
-    data_url = f"data:image/{format};base64,{base64_image}"
 
-    return ImageContent(data=data_url, type="image", mimeType=f"image/{format}")
+    return ImageContent(data=base64_image, type="image", mimeType=f"image/{format}")
 
 
 @mcp.tool()

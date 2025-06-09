@@ -1,4 +1,6 @@
+import base64
 from contextlib import AsyncExitStack
+import os
 from typing import Any, TYPE_CHECKING, cast
 import json
 
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class MCPClient:
-    def __init__(self, unique_name: str):
+    def __init__(self, unique_name: str, image_uploader: "ImageUploader | None" = None):
         """Initialize the MCP client.
         Args:
             unique_name: The name of the client, serves as Namespace to prevent conflicts with function names
@@ -30,10 +32,13 @@ class MCPClient:
             Keep it short and descriptive as it will be added to the tool name before passing
             it to the LLM. e.g: "FileSystem", "Agora", "Amazon", etc.
             The tool names will be something like "FileSystem.list_files",
+            image_uploader: An optional image uploader instance to handle image uploads. If not provided,
+            a default uploader will be used that assumes the client is running on Huggingface Spaces.
         """
         self.session: ClientSession | None = None
         self.exit_stack = AsyncExitStack()
         self.name = unique_name
+        self.image_uploader = image_uploader or ImageUploader()
 
     def ensure_initialized(self):
         if not self.session:
@@ -115,8 +120,8 @@ class MCPClient:
         return {
             "role": "tool",
             "tool_call_id": call_id,
-            "content": content, # type: ignore
-        } 
+            "content": content,  # type: ignore
+        }
 
     async def post_tool_call(
         self,
@@ -132,6 +137,19 @@ class MCPClient:
                     ChatCompletionContentPartTextParam(type="text", text=content.text)
                 )
             elif isinstance(content, ImageContent):
+                # We need to give a reference (in this case a URL) to the LLM for
+                # any image content we show it, so that when needed it can show it to the user.
+                image_url = self.image_uploader.upload_image(
+                    image_bytes=base64.b64decode(content.data),
+                    filename=f"{call_id}.{content.mimeType.split('/')[1]}",  # e.g. "call_id.png"
+                )
+                contents.append(
+                    ChatCompletionContentPartTextParam(
+                        type="text",
+                        text=f"image_url: {image_url}\nimage:",
+                    )
+                )
+                # Put the image content after the url
                 contents.append(
                     ChatCompletionContentPartImageParam(
                         type="image_url", image_url=ImageURL(url=content.data)
@@ -182,8 +200,18 @@ class AgoraMCPClient(MCPClient):
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
             for key in self.FIELDS_TO_REMOVE:
                 del product[key]
+
             # We add the product data first then show its image if available.
-            new_content.append({"type": "text", "text": json.dumps(product)})
+            # The LLM will see:
+            # product_details: {...}
+            # product_image:
+            # <image_content> or <Not available message>
+            new_content.append(
+                ChatCompletionContentPartTextParam(
+                    type="text",
+                    text=f"product_details: {json.dumps(product)}\nproduct_image:",
+                )
+            )
             if product.get("images"):
                 new_content.append(
                     ChatCompletionContentPartImageParam(
@@ -195,8 +223,36 @@ class AgoraMCPClient(MCPClient):
                 new_content.append(
                     ChatCompletionContentPartTextParam(
                         type="text",
-                        text=f'No image available for "{product["name"]}" with ID {product.get("_id")}.',
+                        text=f'No image available for "{product["name"]}" with _id {product.get("_id")}.',
                     )
                 )
 
         return new_content
+
+
+class ImageUploader:
+    """
+    A simple image uploader that can be used to upload images to a server and return their URLs.
+    By default, this class assumes that it is deployed on Huggingface Spaces, you can extend it to
+    upload images to any other server by overriding the `upload_image` method.
+    """
+
+    def _get_space_url(self):
+        space_host = os.getenv("SPACE_HOST")
+        return f"https://{space_host}"
+
+    def upload_image(self, image_bytes: bytes, filename) -> str:
+        """
+        Upload an image to the server and return its URL.
+        Args:
+            image_bytes: The image bytes to upload.
+
+        Returns:
+            str: The URL of the uploaded image.
+        """
+        unique_filename = f"{os.urandom(8).hex()}_{filename}"
+        file_path = f"/tmp/{unique_filename}"
+        with open(file_path, "wb") as f:
+            f.write(image_bytes)
+
+        return f"{self._get_space_url()}/gradio_api/file={file_path}"
