@@ -1,5 +1,6 @@
 import modal
 from configs import (
+    CHAT_TEMPLATE,
     vllm_image,
     hf_cache_vol,
     vllm_cache_vol,
@@ -9,7 +10,7 @@ from configs import (
     N_GPU,
     API_KEY,
     VLLM_PORT,
-    flashinfer_cache_vol
+    flashinfer_cache_vol,
 )
 
 
@@ -38,16 +39,10 @@ app = modal.App("vibe-shopping-llm")
 def serve_llm():
     import subprocess
     import os
-    import requests
 
     chat_template_path = "/root/chat-template.jinja"
-
-    if not os.path.exists(chat_template_path):
-        template_json = requests.get(
-            f"https://huggingface.co/{MODEL_NAME}/resolve/main/chat_template.json"
-        ).json()
-        with open(chat_template_path, "w") as f:
-            f.write(template_json["chat_template"])
+    with open(chat_template_path, "w") as f:
+        f.write(CHAT_TEMPLATE)
 
     cmd = [
         "vllm",
@@ -73,6 +68,7 @@ def serve_llm():
         os.environ["API_KEY"],
         "--tensor-parallel-size",
         str(N_GPU),
+        "--enforce-eager"
     ]
 
     subprocess.Popen(cmd)
