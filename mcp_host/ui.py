@@ -13,11 +13,10 @@ def UI(products_state: gr.State, image_state: gr.State):
             justify-content: center;
             height: 100%;
             width: 100%;
-            background: url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            position: relative;
             background-color: rgba(0, 0, 0, 0.5);
             color: white;
             text-align: center;
@@ -31,6 +30,9 @@ def UI(products_state: gr.State, image_state: gr.State):
             </p>
         </div>""",
         container=True,
+        max_height=620,
+        min_height=620,
+        padding=False,
     )
 
     if products_state.value:

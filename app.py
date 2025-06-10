@@ -107,6 +107,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             rtc_configuration=get_cloudflare_turn_credentials_async,
             server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000),
             scale=0,
+            height=190,
         )
         with gr.Accordion(open=False, label="Input Image"):
             gr.Markdown(
