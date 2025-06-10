@@ -36,17 +36,30 @@ app = modal.App("vibe-shopping-llm")
 def serve_llm():
     import subprocess
     import os
+    import requests
+
+    chat_template_path = "/root/chat-template.jinja"
+
+    if not os.path.exists(chat_template_path):
+        template_json = requests.get(
+            "https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/blob/main/chat_template.json"
+        ).json()
+        with open(chat_template_path, "w") as f:
+            f.write(template_json["chat_template"])
 
     cmd = [
         "vllm",
         "serve",
-        "--uvicorn-log-level=info",
+        "--model",
         MODEL_NAME,
         "--revision",
         MODEL_REVISION,
+        "--uvicorn-log-level=info",
         "--tool-call-parser",
         "mistral",
         "--enable-auto-tool-choice",
+        "--chat-template",
+        chat_template_path,
         "--limit-mm-per-prompt",
         "image=20",
         "--tensor-parallel-size",
@@ -81,7 +94,9 @@ def test(test_timeout=25 * MINUTE, twice: bool = True):
     up, start, delay = False, time.time(), 10
     while not up:
         try:
-            with urllib.request.urlopen(serve_llm.get_web_url() + "/health") as response:
+            with urllib.request.urlopen(
+                serve_llm.get_web_url() + "/health"
+            ) as response:
                 if response.getcode() == 200:
                     up = True
         except Exception:
