@@ -68,7 +68,9 @@ If a tool requires an input that you don't have based on your knowledge and the 
         self.display_tool = _build_display_tool_definition()
         self.image_uploader = image_uploader
 
-    async def connect_clients(self, fewsats_api_key: str | None = "FAKE_API_KEY"):
+    async def connect_clients(
+        self, fewsats_api_key: str = os.getenv("FEWSATS_API_KEY", "FAKE_API_KEY")
+    ):
         await self.agora_client.connect_to_server("uvx", ["agora-mcp"])
         await self.fewsats_client.connect_to_server(
             "env", [f"FEWSATS_API_KEY={fewsats_api_key}", "uvx", "fewsats-mcp"]

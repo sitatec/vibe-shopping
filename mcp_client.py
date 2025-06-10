@@ -1,26 +1,22 @@
 import base64
 from contextlib import AsyncExitStack
-from typing import Any, TYPE_CHECKING, cast
+from typing import Any, cast
 import json
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.types import CallToolResult, TextContent, ImageContent
 from openai.types.chat import (
     ChatCompletionToolParam,
     ChatCompletionContentPartImageParam,
     ChatCompletionContentPartTextParam,
+    ChatCompletionToolMessageParam,
+    ChatCompletionContentPartParam,
 )
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from openai.types.shared_params import FunctionDefinition
 
 from utils import ImageUploader
-
-if TYPE_CHECKING:
-    from mcp.types import CallToolResult, TextContent, ImageContent
-    from openai.types.chat import (
-        ChatCompletionToolMessageParam,
-        ChatCompletionContentPartParam,
-    )
 
 
 class MCPClient:
