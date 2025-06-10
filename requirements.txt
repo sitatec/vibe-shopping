@@ -7,4 +7,4 @@ misaki[zh,ja,en]>=0.9.4
 stream2sentence>=0.3.1
 fastrtc>=0.0.26
 gradio
-cutlet>=0.5.0
+unidic-lite>=1.0.8
