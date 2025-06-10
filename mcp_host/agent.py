@@ -143,7 +143,8 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 "content": user_message_contents,
             }
         )
-
+        print(f"User message: {user_text_message}")
+        print("Entering Agent loop")
         while True:
             tool_calls: list[ChatCompletionMessageToolCallParam] = []
             tool_responses: list[ChatCompletionToolMessageParam] = []
@@ -172,7 +173,10 @@ If a tool requires an input that you don't have based on your knowledge and the 
             )
 
             if not tool_responses:
+                print("No tool responses, ending chat loop.")
                 break
+            print(f"Tool responses: {tool_responses}")
+            print(f"Continuing Agent loop with chat history: {chat_history}")
 
     async def _send_to_llm(
         self,
@@ -196,6 +200,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
 
         def text_stream() -> Generator[str, None, None]:
             for chunk in llm_stream:
+                print(f"LLM stream chunk: {chunk}")
                 delta = chunk.choices[0].delta
 
                 if delta.content:
@@ -208,9 +213,9 @@ If a tool requires an input that you don't have based on your knowledge and the 
                     if index not in pending_tool_calls:
                         pending_tool_calls[index] = tool_call
 
-                    if tool_call.function is not None and tool_call.function.arguments:
+                    if tool_call.function is not None and tool_call.function.arguments is not None:
                         function = pending_tool_calls[index].function
-                        if function is not None and function.arguments:
+                        if function is not None and function.arguments is not None:
                             function.arguments += tool_call.function.arguments
 
         if gradio_client is not None:
@@ -223,8 +228,10 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 text_stream(), voice=voice
             ):
                 yield ai_speech
-
+        print("LLM stream completed.")
+        print(f"Pending tool calls: {pending_tool_calls}")
         for tool_call in pending_tool_calls.values():
+            print(f"Processing tool call: {tool_call}")
             assert tool_call.function is not None, "Tool call function must not be None"
 
             call_id: str = tool_call.id  # type: ignore
@@ -254,6 +261,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 )
             else:
                 try:
+                    print(f"Calling tool {tool_name} with args: {tool_args}")
                     if tool_name == "display":
                         args = json.loads(tool_args) if tool_args else {}
                         update_ui(
@@ -272,6 +280,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
                             tool_name=tool_name,
                             tool_args=json.loads(tool_args) if tool_args else None,
                         )
+                    print(f"Tool response: {tool_response}")
                     tool_responses.append(tool_response)
                 except Exception as e:
                     print(f"Error calling tool {tool_name}: {e}")
