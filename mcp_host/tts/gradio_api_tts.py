@@ -1,4 +1,7 @@
+import io
 from typing import AsyncGenerator, Iterator
+import base64
+import wave
 
 import numpy as np
 from gradio_client import Client
@@ -34,7 +37,33 @@ async def stream_text_to_speech(
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
         audio = client.submit(
-            text=text, voice=voice, speed=1, use_gpu="true", api_name="/generate_all"
+            text=text, voice=voice, speed=1, use_gpu=True, api_name="/stream"
         )
         for audio_chunk in audio:
-            yield audio_chunk
+            yield base64_to_audio_array(audio_chunk)
+
+
+def base64_to_audio_array(base64_string):
+    # Decode base64 to raw WAV bytes
+    audio_bytes = base64.b64decode(base64_string)
+    buffer = io.BytesIO(audio_bytes)
+
+    # Read WAV using wave module
+    with wave.open(buffer, 'rb') as wf:
+        sample_rate = wf.getframerate()
+        n_channels = wf.getnchannels()
+        n_frames = wf.getnframes()
+
+        audio_data = wf.readframes(n_frames)
+
+    # Convert bytes to NumPy array (assumes int16)
+    audio_array = np.frombuffer(audio_data, dtype=np.int16)
+
+    # Reshape for stereo if needed
+    if n_channels > 1:
+        audio_array = audio_array.reshape(-1, n_channels)
+
+    # Normalize to float32 [-1.0, 1.0]
+    audio_array = audio_array.astype(np.float32) / 32767
+
+    return sample_rate, audio_array
