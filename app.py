@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import gradio as gr
@@ -20,22 +21,26 @@ vibe_shopping_agent = VibeShoppingAgent()
 
 asyncio.get_event_loop().run_until_complete(vibe_shopping_agent.connect_clients())
 
-def handle_image_upload(image_with_mask: dict | None) -> tuple[Image.Image | None, Image.Image | None]:
+
+def handle_image_upload(
+    image_with_mask: dict | None,
+) -> tuple[Image.Image | None, Image.Image | None]:
     if not image_with_mask:
         return None, None
-    
+
     # Extract image and mask from ImageEditor data
     image = image_with_mask["background"]
     mask = None
     if "layers" in image_with_mask and len(image_with_mask["layers"]) > 0:
         mask = image_with_mask["layers"][0]  # First layer contains the mask
-        
+
         # Convert mask to a binary mask (white for masked area, black for unmasked)
         mask_array = np.array(mask)
         is_black = np.all(mask_array < 10, axis=2)
         mask = Image.fromarray(((~is_black) * 255).astype(np.uint8))
-    
+
     return image, mask
+
 
 async def handle_audio_stream(
     audio: tuple[int, np.ndarray],
@@ -44,7 +49,7 @@ async def handle_audio_stream(
     displayed_products: list[dict] | None = None,
     displayed_image: str | None = None,
     image_with_mask: dict | None = None,
-):  
+):
     image, mask = handle_image_upload(image_with_mask)
 
     def update_ui(products, image, clear_ui):
@@ -123,4 +128,8 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         show_progress="hidden",
     )
 
-    vibe_shopping_app.launch()
+    vibe_shopping_app.launch(
+        allowed_paths=[str(Path(__file__).parent / "static")],
+        share=True,
+        debug=True,
+    )
