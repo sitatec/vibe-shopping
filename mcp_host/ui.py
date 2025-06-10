@@ -5,11 +5,31 @@ from utils import get_hf_space_file_url_prefix
 
 def UI(products_state: gr.State, image_state: gr.State):
     ui_container = gr.HTML(
-        # Placeholder for initial UI
-        FullSizeImage(
-            f"{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp",
-            fit="cover",
-        ),
+        # Placeholder for initial UI Use the image as background with a dark overlay
+        f"""<div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            background: url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            text-align: center;
+            padding: 32px;
+        ">
+            <h2>Welcome to Vibe Shopping</h2>
+            <h4 >What the AI assistant want to show you will appear here.</h4>
+            <p>
+                You can talk to the AI assistant to find products, virtual try on clothes, check how products like furniture look in your home, and more.</br>
+                You can also upload an image to show to the AI assistant what you are looking for or upload images of yourself to try on clothes.
+            </p>
+        </div>""",
         container=True,
     )
 
@@ -94,13 +114,8 @@ def ImageDisplay(image_url: str):
     if not image_url:
         return gr.update(value="")
 
-    html = FullSizeImage(image_url)
-
-    return gr.update(value=html)
-
-
-def FullSizeImage(image_url, fit: str = "contain") -> str:
-    return f"""
+    # html = FullSizeImage(image_url)
+    html = f"""
     <div style="
         display: flex;
         justify-content: center;
@@ -108,12 +123,20 @@ def FullSizeImage(image_url, fit: str = "contain") -> str:
         height: 100%;
         width: 100%;
     ">
-        <img src="{image_url}" alt="Displayed Image" style="
+        {FullSizeImage(image_url)}
+    </div>
+    """
+
+    return gr.update(value=html)
+
+
+def FullSizeImage(image_url, fit: str = "contain", border_radius=12) -> str:
+    return f"""
+        <img src="{image_url}" alt="Vibe Shopping Image" style="
             max-width: 100%;
             max-height: 100%;
-            border-radius: 12px;
+            border-radius: {border_radius}px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             object-fit: {fit};
         " />
-    </div>
     """
