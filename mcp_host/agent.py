@@ -200,7 +200,6 @@ If a tool requires an input that you don't have based on your knowledge and the 
 
         def text_stream() -> Generator[str, None, None]:
             for chunk in llm_stream:
-                print(f"LLM stream chunk: {chunk}")
                 delta = chunk.choices[0].delta
 
                 if delta.content:

@@ -3,6 +3,17 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+
+IS_LOCAL = os.getenv("LOCALE_RUN") is not None
+print("IS_LOCAL:", IS_LOCAL)
+if IS_LOCAL:
+    import dotenv
+    dotenv.load_dotenv()
+    
+    assert os.getenv("OPENAI_API_KEY") is not None, "OPENAI_API_KEY env var must be set"
+    assert os.getenv("OPENAI_API_BASE_URL")  is not None, "OPENAI_API_BASE_URL env var must be set"
+    assert os.getenv("STT_OPENAI_API_KEY") is not None, "STT_OPENAI_API_KEY env var must be set"
+
 import asyncio
 import gradio as gr
 from gradio_client import Client
@@ -24,16 +35,6 @@ if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
 
 gr.set_static_paths("static/")
-
-IS_LOCAL = os.getenv("LOCALE_RUN") is not None
-print("IS_LOCAL:", IS_LOCAL)
-if IS_LOCAL:
-    import dotenv
-    dotenv.load_dotenv()
-    
-    assert os.getenv("OPENAI_API_KEY") is not None, "OPENAI_API_KEY env var must be set"
-    assert os.getenv("OPENAI_API_BASE_URL")  is not None, "OPENAI_API_BASE_URL env var must be set"
-    assert os.getenv("STT_OPENAI_API_KEY") is not None, "STT_OPENAI_API_KEY env var must be set"
 
 
 vibe_shopping_agent = VibeShoppingAgent()

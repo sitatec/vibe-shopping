@@ -112,6 +112,7 @@ class MCPClient:
         self, call_id: str, tool_name: str, tool_args: dict[str, Any] | None = None
     ) -> ChatCompletionToolMessageParam:
         self.ensure_initialized()
+        tool_name = tool_name.split(".", 1)[-1]  # Remove the namespace prefix if exists
 
         tool_name, tool_args = await self.pre_tool_call(call_id, tool_name, tool_args)
         response = await self.session.call_tool(tool_name, tool_args)  # type: ignore
