@@ -12,7 +12,7 @@ from configs import (
 )
 
 
-app = modal.App("vibe-shopping")
+app = modal.App("vibe-shopping-llm")
 
 
 @app.function(

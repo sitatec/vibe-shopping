@@ -18,7 +18,7 @@ with image.imports():
 
 TransformType = Callable[[Image.Image | np.ndarray], torch.Tensor]
 
-app = modal.App("vibe-shopping")
+app = modal.App("vibe-shopping-virtual-try")
 
 
 @app.cls(**modal_class_config)
