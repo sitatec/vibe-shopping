@@ -15,7 +15,7 @@ from fastrtc import (
 )
 
 from mcp_host.agent import VibeShoppingAgent
-from mcp_host.tts.hf_zero_gpu_tts import VOICES
+from mcp_host.tts.utils import VOICES
 from mcp_host.ui import UI
 
 if TYPE_CHECKING:
