@@ -219,11 +219,13 @@ If a tool requires an input that you don't have based on your knowledge and the 
                             function.arguments += tool_call.function.arguments
 
         if gradio_client is not None:
+            print("Using online Gradio client for text-to-speech.")
             async for audio_chunk in online_stream_text_to_speech(
                 text_stream(), client=gradio_client, voice=voice
             ):
                 yield audio_chunk
         else:
+            print("Using on-device text-to-speech.")
             async for ai_speech in on_device_stream_text_to_speech(
                 text_stream(), voice=voice
             ):

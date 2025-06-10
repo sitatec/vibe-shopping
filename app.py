@@ -79,6 +79,7 @@ async def handle_audio_stream(
         input_mask=mask,
         gradio_client=gradio_client,
     ):
+        print(f"AI Speech In handler: {ai_speech}")
         # Yield the audio chunk to the WebRTC stream
         yield ai_speech
 

@@ -40,6 +40,7 @@ async def stream_text_to_speech(
             text=text, voice=voice, speed=1, use_gpu=True, api_name="/stream"
         )
         for audio_chunk in audio:
+            print(f"Received audio chunk: {audio_chunk[:10]}...")
             yield base64_to_audio_array(audio_chunk)
 
 
