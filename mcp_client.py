@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from openai.types.chat import (
         ChatCompletionToolMessageParam,
         ChatCompletionContentPartParam,
-        ChatCompletionToolParam
+        ChatCompletionToolParam,
     )
 
 
@@ -98,7 +98,7 @@ class MCPClient:
         await self.session.initialize()
 
         print(
-            "\nConnected successfully! \nAvailable tools:",
+            f"\nSuccessfully Connected to {self.name} MCPClient! \nAvailable tools:",
             [tool["function"]["name"] for tool in await self.tools],  # type: ignore
             "\n",
         )

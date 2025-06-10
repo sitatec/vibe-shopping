@@ -5,7 +5,13 @@ from typing import TYPE_CHECKING
 import gradio as gr
 import numpy as np
 from PIL import Image
-from fastrtc import AdditionalOutputs, WebRTC, ReplyOnPause
+from fastrtc import (
+    AdditionalOutputs,
+    WebRTC,
+    ReplyOnPause,
+    get_cloudflare_turn_credentials_async,
+    get_cloudflare_turn_credentials,
+)
 
 from mcp_host.agent import VibeShoppingAgent
 from mcp_host.tts import VOICES
@@ -98,6 +104,8 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
+            rtc_configuration=get_cloudflare_turn_credentials_async,
+            server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000),
             scale=0,
         )
         with gr.Accordion(open=False, label="Input Image"):
