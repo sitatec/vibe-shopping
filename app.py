@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 
 
 vibe_shopping_agent = VibeShoppingAgent()
-asyncio.run(vibe_shopping_agent.connect_clients())
+
+asyncio.get_event_loop().run_until_complete(vibe_shopping_agent.connect_clients())
 
 def handle_image_upload(image_with_mask: dict | None) -> tuple[Image.Image | None, Image.Image | None]:
     if not image_with_mask:
