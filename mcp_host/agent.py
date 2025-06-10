@@ -208,9 +208,10 @@ If a tool requires an input that you don't have based on your knowledge and the 
                     if index not in pending_tool_calls:
                         pending_tool_calls[index] = tool_call
 
-                    pending_tool_calls[
-                        index
-                    ].function.arguments += tool_call.function.arguments  # type: ignore
+                    if tool_call.function is not None and tool_call.function.arguments:
+                        function = pending_tool_calls[index].function
+                        if function is not None and function.arguments:
+                            function.arguments += tool_call.function.arguments
 
         if gradio_client is not None:
             async for audio_chunk in online_stream_text_to_speech(
