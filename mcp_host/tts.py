@@ -65,7 +65,8 @@ model = KModel().to(device).eval()
 # 🇨🇳 'z' => Mandarin Chinese: pip install misaki[zh]
 pipes = {
     lang_code: KPipeline(lang_code=lang_code, model=model, device=device)
-    for lang_code in "abjzefhip"
+    for lang_code in "abzefhip"
+    # for lang_code in "abjzefhip"
 }
 
 # Preload voices into pipelines
