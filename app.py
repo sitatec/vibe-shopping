@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 import asyncio
@@ -23,6 +24,13 @@ if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
 
 gr.set_static_paths("static/")
+
+IS_LOCAL = os.getenv("LOCALE_RUN") is not None
+
+if IS_LOCAL:
+    import dotenv
+    dotenv.load_dotenv()
+
 
 
 vibe_shopping_agent = VibeShoppingAgent()
@@ -88,6 +96,10 @@ async def handle_audio_stream(
     )  # None for resetting the input_image state
 
 def set_client_for_session(request: gr.Request):
+    if 'x-ip-token' not in request.headers:
+        # Probably running in a local environment
+        return Client("sitatech/Kokoro-TTS")
+    
     x_ip_token = request.headers['x-ip-token']
 
     return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token})
@@ -116,8 +128,8 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
-            rtc_configuration=get_cloudflare_turn_credentials_async,
-            server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000),
+            rtc_configuration=get_cloudflare_turn_credentials_async if not IS_LOCAL else None,
+            server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None,
             scale=0,
         )
         with gr.Accordion(open=False, label="Input Image"):

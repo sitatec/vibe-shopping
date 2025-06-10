@@ -1,3 +1,4 @@
+import os
 from typing import AsyncGenerator, Iterator
 
 import numpy as np
@@ -9,7 +10,8 @@ from mcp_host.tts.utils import KOKORO_TO_STD_LANG, VOICES
 __all__ = ["stream_text_to_speech"]
 
 
-model = get_tts_model(model="kokoro")
+if not os.getenv("LOCALE_RUN"):
+    model = get_tts_model(model="kokoro")
 
 
 async def stream_text_to_speech(
@@ -35,6 +37,5 @@ async def stream_text_to_speech(
     options = KokoroTTSOptions(voice=voice, lang=standard_lang_code)
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
-      async for audio in model.stream_tts(text, options):
-          yield audio
-        
+        async for audio in model.stream_tts(text, options):
+            yield audio
