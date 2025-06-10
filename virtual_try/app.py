@@ -21,7 +21,7 @@ TransformType = Callable[[Image.Image | np.ndarray], torch.Tensor]
 app = modal.App("vibe-shopping-virtual-try")
 
 
-@app.cls(**modal_class_config)
+@app.cls(**modal_class_config, max_containers=1)
 class VirtualTryModel:
     @modal.enter()
     def enter(self):
