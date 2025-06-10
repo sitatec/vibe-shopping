@@ -10,7 +10,7 @@ from openai import OpenAI
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.stt.openai_stt import speech_to_text
-from mcp_host.tts.fastrtc_tts import stream_text_to_speech
+from mcp_host.tts.gradio_api_tts import stream_text_to_speech
 from utils import ImageUploader
 
 if TYPE_CHECKING:
