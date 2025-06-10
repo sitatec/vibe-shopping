@@ -18,8 +18,8 @@ VOICES = {
     "EN🇬🇧 Emma 👩": "bf_emma",
     "EN🇬🇧 George 👨": "bm_george",
     # Japanese
-    "JA🇯🇵 Alpha 👩": "jf_alpha",
-    "JA🇯🇵 Kumo 👨": "jm_kumo",
+    # "JA🇯🇵 Alpha 👩": "jf_alpha",
+    # "JA🇯🇵 Kumo 👨": "jm_kumo",
     # Mandarin Chinese
     "ZH🇨🇳 Xiaoni 👩": "zf_xiaoni",
     "ZH🇨🇳 Yunjian 👨": "zm_yunjian",
