@@ -66,7 +66,7 @@ class AutoInpaintMaskGenerator:
         # Convert to uint8 binary mask for inpainting
         binary_mask = (combined_mask.astype(np.uint8)) * 255  # 0 or 255
 
-        # Apply dilation
+        # Apply dilation, to give more flexibility to the inpainting model
         kernel = np.ones((10, 10), np.uint8)
         dilated_mask = cv2.dilate(binary_mask, kernel, iterations=1)
         return dilated_mask

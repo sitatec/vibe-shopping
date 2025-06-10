@@ -3,7 +3,6 @@ from configs import (
     vllm_image,
     hf_cache_vol,
     vllm_cache_vol,
-    flashinfer_cache_volume,
     MODEL_NAME,
     MODEL_REVISION,
     MINUTE,
@@ -20,14 +19,13 @@ app = modal.App("vibe-shopping")
     image=vllm_image,
     gpu=f"H100:{N_GPU}",
     scaledown_window=(
-        1 * MINUTE
+        2 * MINUTE
         # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
     ),
     timeout=10 * MINUTE,  # how long should we wait for container start?
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
-        "/root/.cache/flashinfer": flashinfer_cache_volume,
     },
     secrets=[API_KEY],
 )
@@ -68,7 +66,7 @@ def serve_llm():
 
 ###### ------ FOR TESTING PURPOSES ONLY ------ ######
 @app.local_entrypoint()
-def test(test_timeout=25 * MINUTE):
+def test(test_timeout=25 * MINUTE, twice: bool = True):
     import os
     import json
     import time
@@ -111,3 +109,8 @@ def test(test_timeout=25 * MINUTE):
     )
     with urllib.request.urlopen(req) as response:
         print(json.loads(response.read().decode()))
+
+    if twice:
+        print("Sending the same message again to test caching.")
+        with urllib.request.urlopen(req) as response:
+            print(json.loads(response.read().decode()))
