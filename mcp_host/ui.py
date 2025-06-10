@@ -22,7 +22,7 @@ def UI(products_state: gr.State, image_state: gr.State):
             padding: 32px;
         ">
             <h1>Welcome to Vibe Shopping</h1>
-            <h2 >What the AI assistant want to show you will appear here.</h2>
+            <h3 >What the AI assistant want to show you will appear here.</h3>
             <p style="font-size: 1.1rem; margin-top: 16px;">
                 You can talk to the AI assistant to find products, virtual try on clothes, check how products like furniture look in your home, and more.</br>
                 You can also upload an image to show to the AI assistant what you are looking for or upload images of yourself to try on clothes.

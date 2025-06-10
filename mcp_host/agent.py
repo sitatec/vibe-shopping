@@ -203,7 +203,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
                         index
                     ].function.arguments += tool_call.function.arguments  # type: ignore
 
-        for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
+        async for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
             yield ai_speech
 
         for tool_call in pending_tool_calls.values():
