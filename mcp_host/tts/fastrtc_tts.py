@@ -26,7 +26,7 @@ def stream_text_to_speech(
         np.ndarray: The audio as a NumPy array.
     """
     voice = voice or "af_heart"
-    if voice not in VOICES:
+    if voice not in VOICES.values():
         raise ValueError(f"Voice '{voice}' is not available.")
 
     kokoro_lang = voice[0]

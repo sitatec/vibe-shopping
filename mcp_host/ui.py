@@ -30,7 +30,7 @@ def UI(products_state: gr.State, image_state: gr.State):
         </div>""",
         container=True,
         max_height=600,
-        min_height=600,
+        min_height=450,
         padding=False,
     )
 
