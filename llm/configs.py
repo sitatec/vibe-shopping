@@ -9,6 +9,7 @@ vllm_image = (
     .pip_install(
         "vllm==0.9.0.1",
         "huggingface_hub[hf_transfer]==0.32.4",
+        "flashinfer-python==0.2.6.post1"
     )
     .env(
         {
@@ -27,6 +28,9 @@ hf_cache_vol = modal.Volume.from_name(
 )
 vllm_cache_vol = modal.Volume.from_name(
     "vllm-cache", create_if_missing=True, environment_name="vibe-shopping"
+)
+flashinfer_cache_vol = modal.Volume.from_name(
+    "flashinfer-cache", create_if_missing=True, environment_name="vibe-shopping"
 )
 
 N_GPU = 1

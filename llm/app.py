@@ -9,6 +9,7 @@ from configs import (
     N_GPU,
     API_KEY,
     VLLM_PORT,
+    flashinfer_cache_vol
 )
 
 
@@ -26,6 +27,7 @@ app = modal.App("vibe-shopping-llm")
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
+        "/root/.cache/flashinfer": flashinfer_cache_vol,
     },
     secrets=[API_KEY],
 )
