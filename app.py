@@ -20,8 +20,6 @@ gr.set_static_paths("static/")
 
 vibe_shopping_agent = VibeShoppingAgent()
 
-asyncio.get_event_loop().run_until_complete(vibe_shopping_agent.connect_clients())
-
 
 def handle_image_upload(
     image_with_mask: dict | None,
@@ -79,6 +77,8 @@ async def handle_audio_stream(
 
 
 with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
+    vibe_shopping_app.load(vibe_shopping_agent.connect_clients)
+
     chat_history = gr.State(value=[])
     displayed_products = gr.State(value=[])
     displayed_image = gr.State(value=None)
