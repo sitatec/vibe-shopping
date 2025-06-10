@@ -38,7 +38,7 @@ modal_class_config = {
     },
     "secrets": [SECRETS],
     "scaledown_window": (
-        1 * MINUTE
+        10 * MINUTE
         # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
     ),
     "timeout": 10 * MINUTE,  # how long should we wait for container start?

@@ -19,7 +19,7 @@ app = modal.App("vibe-shopping-llm")
     image=vllm_image,
     gpu=f"H100:{N_GPU}",
     scaledown_window=(
-        2 * MINUTE
+        5 * MINUTE
         # how long should we stay up with no requests? Keep it low to minimize credit usage for now.
     ),
     timeout=10 * MINUTE,  # how long should we wait for container start?
