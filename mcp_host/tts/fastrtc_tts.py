@@ -14,7 +14,7 @@ model = get_tts_model(model="kokoro")
 
 async def stream_text_to_speech(
     text_stream: Iterator[str], voice: str | None = None
-) -> AsyncGenerator[np.ndarray, None]:
+) -> AsyncGenerator[tuple[int, np.ndarray], None]:
     """
     Convert text to speech using the specified voice.
 
@@ -36,5 +36,5 @@ async def stream_text_to_speech(
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
       async for audio in model.stream_tts(text, options):
-          yield audio[1]
+          yield audio
         

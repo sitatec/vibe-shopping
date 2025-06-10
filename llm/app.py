@@ -34,7 +34,7 @@ app = modal.App("vibe-shopping-llm")
 @modal.concurrent(
     max_inputs=50  # maximum number of concurrent requests per aut-scaling replica
 )
-@modal.web_server(port=VLLM_PORT, startup_timeout=25 * MINUTE)
+@modal.web_server(port=VLLM_PORT, startup_timeout=10 * MINUTE)
 def serve_llm():
     import subprocess
     import os

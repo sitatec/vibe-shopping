@@ -1,4 +1,4 @@
-from typing import Generator, Iterator
+from typing import AsyncGenerator, Iterator
 
 import numpy as np
 import torch
@@ -38,9 +38,9 @@ for voice_code in VOICES.values():
 
 
 @spaces.GPU(duration=20)
-def stream_text_to_speech(
+async def stream_text_to_speech(
     text_stream: Iterator[str], voice: str | None = None
-) -> Generator[np.ndarray, None, None]:
+) -> AsyncGenerator[tuple[int, np.ndarray], None]:
     """
     Convert text to speech using the specified voice.
 
@@ -61,4 +61,4 @@ def stream_text_to_speech(
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
         for _, __, result in pipe(text, voice=voice):
-            yield result.audio.numpy()
+            yield 24000, result.audio.numpy()

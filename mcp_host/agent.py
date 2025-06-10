@@ -105,7 +105,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         voice: str | None = None,
         input_image: Image.Image | None = None,
         input_mask: Image.Image | None = None,
-    ) -> AsyncGenerator[np.ndarray, None]:
+    ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
@@ -176,7 +176,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         update_ui: Callable[
             [list[dict[str, str]] | None, str | None, bool | None], None
         ],
-    ) -> AsyncGenerator[np.ndarray, None]:
+    ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
