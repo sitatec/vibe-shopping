@@ -7,7 +7,8 @@ def UI(products_state: gr.State, image_state: gr.State):
     ui_container = gr.HTML(
         # Placeholder for initial UI
         FullSizeImage(
-            f"{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp"
+            f"{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp",
+            fit="cover",
         ),
         container=True,
     )
@@ -98,19 +99,21 @@ def ImageDisplay(image_url: str):
     return gr.update(value=html)
 
 
-def FullSizeImage(image_url):
+def FullSizeImage(image_url, fit: str = "contain") -> str:
     return f"""
     <div style="
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100%;
+        width: 100%;
     ">
         <img src="{image_url}" alt="Displayed Image" style="
             max-width: 100%;
             max-height: 100%;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            object-fit: {fit};
         " />
     </div>
     """
