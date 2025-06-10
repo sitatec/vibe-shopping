@@ -213,10 +213,19 @@ If a tool requires an input that you don't have based on your knowledge and the 
                     if index not in pending_tool_calls:
                         pending_tool_calls[index] = tool_call
 
-                    if tool_call.function is not None and tool_call.function.arguments is not None:
-                        function = pending_tool_calls[index].function
-                        if function is not None and function.arguments is not None:
-                            function.arguments += tool_call.function.arguments
+                    if tool_call.function is not None:
+                        pending_fun = pending_tool_calls[index].function
+                        if pending_fun is not None:
+                            if (
+                                tool_call.function.arguments is not None
+                                and pending_fun.arguments is not None
+                            ):
+                                pending_fun.arguments += tool_call.function.arguments
+                            if (
+                                tool_call.function.name is not None
+                                and pending_fun.name is not None
+                            ):
+                                pending_fun.name += tool_call.function.name
 
         if gradio_client is not None:
             print("Using online Gradio client for text-to-speech.")
