@@ -1,10 +1,14 @@
 import gradio as gr
 
+from utils import get_hf_space_file_url_prefix
+
 
 def UI(products_state: gr.State, image_state: gr.State):
     ui_container = gr.HTML(
         # Placeholder for initial UI
-        FullSizeImage("/static/welcome-to-vibe-shopping.webp"),
+        FullSizeImage(
+            f"{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp"
+        ),
         container=True,
     )
 

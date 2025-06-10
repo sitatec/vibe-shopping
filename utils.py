@@ -10,10 +10,6 @@ class ImageUploader:
     upload images to any other server by overriding the `upload_image` method.
     """
 
-    def _get_space_url(self):
-        space_host = os.getenv("SPACE_HOST")
-        return f"https://{space_host}"
-
     def upload_image(self, image: bytes | Image.Image, filename: str) -> str:
         """
         Upload an image to the server and return its URL.
@@ -31,7 +27,7 @@ class ImageUploader:
         with open(file_path, "wb") as f:
             f.write(image)
 
-        return f"{self._get_space_url()}/gradio_api/file={file_path}"
+        return f"{get_hf_space_file_url_prefix()}{file_path}"
 
 
 def pil_to_bytes(image, format: str = "PNG") -> bytes:
@@ -48,3 +44,8 @@ def pil_to_bytes(image, format: str = "PNG") -> bytes:
     buffer = BytesIO()
     image.save(buffer, format=format)
     return buffer.getvalue()
+
+
+def get_hf_space_file_url_prefix() -> str:
+    space_host = os.getenv("SPACE_HOST")
+    return f"https://{space_host}/gradio_api/file="
