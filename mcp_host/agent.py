@@ -16,7 +16,6 @@ from utils import ImageUploader
 if TYPE_CHECKING:
     from openai.types.chat import (
         ChatCompletionMessageParam,
-        ChatCompletionSystemMessageParam,
         ChatCompletionToolMessageParam,
         ChatCompletionMessageToolCallParam,
         ChatCompletionToolParam,
@@ -55,7 +54,10 @@ If a tool requires an input that you don't have based on your knowledge and the 
             api_key=openai_api_key,
         )
         self.chat_history: list[ChatCompletionMessageParam] = [
-            ChatCompletionSystemMessageParam(role="system", content=self.SYSTEM_PROMPT),
+            {
+                "role": "system",
+                "content": self.SYSTEM_PROMPT,
+            }
         ]
         self.model_name = model_name
 
@@ -108,12 +110,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
             # If no history is provided, start with the system prompt
-            chat_history
-            or [
-                ChatCompletionSystemMessageParam(
-                    role="system", content=self.SYSTEM_PROMPT
-                )
-            ]
+            chat_history or [{"role": "system", "content": self.SYSTEM_PROMPT}]
         ).copy()  # Ensure we don't modify the original history
 
         user_message_contents: list[ChatCompletionContentPartParam] = []
