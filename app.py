@@ -8,11 +8,13 @@ IS_LOCAL = os.getenv("LOCALE_RUN") is not None
 print("IS_LOCAL:", IS_LOCAL)
 if IS_LOCAL:
     import dotenv
-    dotenv.load_dotenv()
+    dotenv.load_dotenv(override=True)
     
     assert os.getenv("OPENAI_API_KEY") is not None, "OPENAI_API_KEY env var must be set"
     assert os.getenv("OPENAI_API_BASE_URL")  is not None, "OPENAI_API_BASE_URL env var must be set"
     assert os.getenv("STT_OPENAI_API_KEY") is not None, "STT_OPENAI_API_KEY env var must be set"
+
+    print("OPENAI_API_BASE_URL: ", os.getenv("OPENAI_API_BASE_URL"))
 
 import asyncio
 import gradio as gr
@@ -135,6 +137,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             rtc_configuration=get_cloudflare_turn_credentials_async if not IS_LOCAL else None,
             server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None,
             scale=0,
+            time_limit=90,
         )
         with gr.Accordion(open=False, label="Input Image"):
             gr.Markdown(

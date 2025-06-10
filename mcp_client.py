@@ -115,9 +115,16 @@ class MCPClient:
         tool_name = tool_name.split(".", 1)[-1]  # Remove the namespace prefix if exists
 
         tool_name, tool_args = await self.pre_tool_call(call_id, tool_name, tool_args)
+        print(
+            f"Send tool call to mcp server: {tool_name} with args: {tool_args} (call_id: {call_id})"
+        )
         response = await self.session.call_tool(tool_name, tool_args)  # type: ignore
+        print(
+            f"Response from mcp server: {tool_name} with args: {tool_args} (call_id: {call_id}) :"
+        )
+        print(response.model_dump_json(indent=2))
         content = await self.post_tool_call(call_id, tool_name, response, tool_args)
-
+        print(f"Processed tool call response content: {content}")
         return {
             "role": "tool",
             "tool_call_id": call_id,
