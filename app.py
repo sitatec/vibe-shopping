@@ -85,7 +85,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         voice = gr.Dropdown(
             label="Language & Voice",
             choices=list(VOICES.items()),
-            value=list(VOICES.items())[0],
+            value=list(VOICES.values())[0],  # Default to the first voice
             info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
             scale=0,
         )
