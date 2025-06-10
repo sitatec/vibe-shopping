@@ -88,19 +88,26 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
     displayed_products = gr.State(value=[])
     displayed_image = gr.State(value=None)
     with gr.Column():
+        voice = gr.Dropdown(
+            label="Language & Voice",
+            choices=list(VOICES.items()),
+            value=list(VOICES.values())[0],  # Default to the first voice
+            # info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
+            scale=0,
+        )
         shopping_ui = UI(
             products_state=displayed_products,
             image_state=displayed_image,
         )
         audio_stream = WebRTC(
-            label="Stream",
+            label="Audio Chat",
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
             rtc_configuration=get_cloudflare_turn_credentials_async,
             server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000),
             scale=0,
-            height=120,
+            height=190,
         )
         with gr.Accordion(open=False, label="Input Image"):
             gr.Markdown(
@@ -111,14 +118,6 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
                 "If you want to see how a furniture looks in a room, draw a mask over the area where you want it to be placed... "
             )
             input_image = gr.ImageMask(type="pil")
-
-        voice = gr.Dropdown(
-            label="Language & Voice",
-            choices=list(VOICES.items()),
-            value=list(VOICES.values())[0],  # Default to the first voice
-            info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
-            scale=0,
-        )
 
     audio_stream.stream(
         ReplyOnPause(handle_audio_stream),  # type: ignore
