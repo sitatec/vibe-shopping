@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import gradio as gr
@@ -15,6 +14,8 @@ from mcp_host.ui import UI
 
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
+
+gr.set_static_paths("static/")
 
 
 vibe_shopping_agent = VibeShoppingAgent()
@@ -97,6 +98,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             label="Stream",
             mode="send-receive",
             modality="audio",
+            button_labels={"start": "Start Vibe Shopping"},
             scale=0,
         )
         with gr.Accordion(open=False, label="Input Image"):
@@ -128,8 +130,4 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         show_progress="hidden",
     )
 
-    vibe_shopping_app.launch(
-        allowed_paths=[str(Path(__file__).parent / "static")],
-        share=True,
-        debug=True,
-    )
+    vibe_shopping_app.launch()
