@@ -11,7 +11,7 @@ def UI(products_state: gr.State, image_state: gr.State):
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100%;
+            height: 620px;
             width: 100%;
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
             background-size: cover;
