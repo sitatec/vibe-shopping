@@ -4,13 +4,19 @@ import json
 import os
 from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator
 
+from gradio_client import Client
 import numpy as np
 from PIL import Image
 from openai import OpenAI
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.stt.openai_stt import speech_to_text
-from mcp_host.tts.gradio_api_tts import stream_text_to_speech
+from mcp_host.tts.fastrtc_tts import (
+    stream_text_to_speech as on_device_stream_text_to_speech,
+)
+from mcp_host.tts.gradio_api_tts import (
+    stream_text_to_speech as online_stream_text_to_speech,
+)
 from utils import ImageUploader
 
 if TYPE_CHECKING:
@@ -105,6 +111,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         voice: str | None = None,
         input_image: Image.Image | None = None,
         input_mask: Image.Image | None = None,
+        gradio_client: Client | None = None,
     ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
@@ -149,6 +156,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 tool_responses=tool_responses,
                 text_chunks=text_chunks,
                 update_ui=update_ui,
+                gradio_client=gradio_client,
             ):
                 yield ai_speech
 
@@ -176,6 +184,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         update_ui: Callable[
             [list[dict[str, str]] | None, str | None, bool | None], None
         ],
+        gradio_client: Client | None = None,
     ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
@@ -203,8 +212,16 @@ If a tool requires an input that you don't have based on your knowledge and the 
                         index
                     ].function.arguments += tool_call.function.arguments  # type: ignore
 
-        async for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
-            yield ai_speech
+        if gradio_client is not None:
+            async for audio_chunk in online_stream_text_to_speech(
+                text_stream(), client=gradio_client, voice=voice
+            ):
+                yield audio_chunk
+        else:
+            async for ai_speech in on_device_stream_text_to_speech(
+                text_stream(), voice=voice
+            ):
+                yield ai_speech
 
         for tool_call in pending_tool_calls.values():
             assert tool_call.function is not None, "Tool call function must not be None"

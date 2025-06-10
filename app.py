@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import asyncio
 import gradio as gr
+from gradio_client import Client
 import numpy as np
 from PIL import Image
 from fastrtc import (
@@ -56,6 +57,7 @@ async def handle_audio_stream(
     displayed_products: list[dict] | None = None,
     displayed_image: str | None = None,
     image_with_mask: dict | None = None,
+    gradio_client: Client | None = None,
 ):
     image, mask = handle_image_upload(image_with_mask)
 
@@ -75,6 +77,7 @@ async def handle_audio_stream(
         update_ui=update_ui,
         input_image=image,
         input_mask=mask,
+        gradio_client=gradio_client,
     ):
         # Yield the audio chunk to the WebRTC stream
         yield ai_speech
@@ -83,8 +86,15 @@ async def handle_audio_stream(
         chat_history, displayed_products, displayed_image, None
     )  # None for resetting the input_image state
 
+def set_client_for_session(request: gr.Request):
+    x_ip_token = request.headers['x-ip-token']
+
+    return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token})
 
 with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
+    gradio_client = gr.State()
+    vibe_shopping_app.load(set_client_for_session, None, gradio_client)
+
     chat_history = gr.State(value=[])
     displayed_products = gr.State(value=[])
     displayed_image = gr.State(value=None)
@@ -128,6 +138,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             displayed_products,
             displayed_image,
             input_image,
+            gradio_client,
         ],
         outputs=[audio_stream],
     )
