@@ -5,6 +5,6 @@ uv
 kokoro>=0.9.4
 misaki[zh,en]>=0.9.4
 stream2sentence>=0.3.1
-fastrtc[vad]>=0.0.26
+fastrtc[vad,tts]>=0.0.26
 gradio
 torchaudio

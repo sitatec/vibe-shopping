@@ -15,7 +15,7 @@ from fastrtc import (
 )
 
 from mcp_host.agent import VibeShoppingAgent
-from mcp_host.tts import VOICES
+from mcp_host.tts.hf_zero_gpu_tts import VOICES
 from mcp_host.ui import UI
 
 if TYPE_CHECKING:
@@ -27,6 +27,7 @@ gr.set_static_paths("static/")
 vibe_shopping_agent = VibeShoppingAgent()
 
 asyncio.get_event_loop().run_until_complete(vibe_shopping_agent.connect_clients())
+
 
 def handle_image_upload(
     image_with_mask: dict | None,

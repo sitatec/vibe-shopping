@@ -50,7 +50,6 @@ def serve_llm():
     cmd = [
         "vllm",
         "serve",
-        "--model",
         MODEL_NAME,
         "--revision",
         MODEL_REVISION,
