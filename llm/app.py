@@ -42,7 +42,7 @@ def serve_llm():
 
     if not os.path.exists(chat_template_path):
         template_json = requests.get(
-            "https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/resolve/main/chat_template.json"
+            f"https://huggingface.co/{MODEL_NAME}/resolve/main/chat_template.json"
         ).json()
         with open(chat_template_path, "w") as f:
             f.write(template_json["chat_template"])
