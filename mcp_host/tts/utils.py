@@ -30,13 +30,13 @@ VOICES = {
 }
 
 KOKORO_TO_STD_LANG = {
-    "a": "en",
-    "b": "en",
+    "a": "en-us",
+    "b": "en-gb",
     "e": "es",
-    "f": "fr",
+    "f": "fr-fr",
     "h": "hi",
     "i": "it",
+    "p": "pt-br",
     "j": "ja",
-    "p": "pt",
     "z": "zh",
 }
