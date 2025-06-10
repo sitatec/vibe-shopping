@@ -1,20 +1,21 @@
+from __future__ import annotations
+
 import base64
 from contextlib import AsyncExitStack
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 import json
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.types import CallToolResult, TextContent, ImageContent
-from openai.types.chat import (
-    ChatCompletionToolParam,
-    ChatCompletionContentPartImageParam,
-    ChatCompletionContentPartTextParam,
-    ChatCompletionToolMessageParam,
-    ChatCompletionContentPartParam,
-)
-from openai.types.chat.chat_completion_content_part_image_param import ImageURL
-from openai.types.shared_params import FunctionDefinition
+
+if TYPE_CHECKING:
+    from mcp.types import CallToolResult, TextContent, ImageContent
+    from openai.types.chat import (
+        ChatCompletionToolMessageParam,
+        ChatCompletionContentPartParam,
+        ChatCompletionToolParam
+    )
+
 
 from utils import ImageUploader
 
@@ -46,19 +47,19 @@ class MCPClient:
             )
 
     @property
-    async def tools(self):
+    async def tools(self) -> list[ChatCompletionToolParam]:
         self.ensure_initialized()
         response = await self.session.list_tools()  # type: ignore
 
         return [
-            ChatCompletionToolParam(
-                type="function",
-                function=FunctionDefinition(
-                    name=f"{self.name}.{tool.name}",
-                    description=tool.description or "",
-                    parameters=tool.inputSchema,
-                ),
-            )
+            {
+                "type": "function",
+                "function": {
+                    "name": f"{self.name}.{tool.name}",
+                    "description": tool.description or "",
+                    "parameters": tool.inputSchema,
+                },
+            }
             for tool in response.tools
         ]
 
@@ -98,7 +99,7 @@ class MCPClient:
 
         print(
             "\nConnected successfully! \nAvailable tools:",
-            [tool.function.name for tool in await self.tools],  # type: ignore
+            [tool["function"]["name"] for tool in await self.tools],  # type: ignore
             "\n",
         )
 
@@ -133,7 +134,10 @@ class MCPClient:
         for content in response.content:
             if isinstance(content, TextContent):
                 contents.append(
-                    ChatCompletionContentPartTextParam(type="text", text=content.text)
+                    {
+                        "type": "text",
+                        "text": content.text,
+                    }
                 )
             elif isinstance(content, ImageContent):
                 # We need to give a reference (in this case a URL) to the LLM for
@@ -143,16 +147,19 @@ class MCPClient:
                     filename=f"{call_id}.{content.mimeType.split('/')[1]}",  # e.g. "call_id.png"
                 )
                 contents.append(
-                    ChatCompletionContentPartTextParam(
-                        type="text",
-                        text=f"image_url: {image_url}\nimage:",
-                    )
+                    {
+                        "type": "text",
+                        "text": f"image_url: {image_url}\nimage:",
+                    }
                 )
                 # Put the image content after the url
                 contents.append(
-                    ChatCompletionContentPartImageParam(
-                        type="image_url", image_url=ImageURL(url=content.data)
-                    )
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": content.data,
+                        },
+                    }
                 )
             else:
                 raise ValueError(f"Unsupported content type: {content.type}")
@@ -206,24 +213,26 @@ class AgoraMCPClient(MCPClient):
             # product_image:
             # <image_content> or <Not available message>
             new_content.append(
-                ChatCompletionContentPartTextParam(
-                    type="text",
-                    text=f"product_details: {json.dumps(product)}\nproduct_image:",
-                )
+                {
+                    "type": "text",
+                    "text": f"product_details: {json.dumps(product)}\nproduct_image:",
+                }
             )
             if product.get("images"):
                 new_content.append(
-                    ChatCompletionContentPartImageParam(
-                        type="image_url",
-                        image_url=ImageURL(url=product["images"][0]),
-                    )
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": product["images"][0],
+                        },
+                    }
                 )
             else:
                 new_content.append(
-                    ChatCompletionContentPartTextParam(
-                        type="text",
-                        text=f'No image available for "{product["name"]}" with _id {product.get("_id")}.',
-                    )
+                    {
+                        "type": "text",
+                        "text": f'No image available for "{product["name"]}" with _id {product.get("_id")}.',
+                    }
                 )
 
         return new_content

@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import asyncio
+from typing import TYPE_CHECKING
 
 import gradio as gr
 import numpy as np
 from PIL import Image
 from fastrtc import AdditionalOutputs, WebRTC, ReplyOnPause
-from openai.types.chat import ChatCompletionMessageParam
 
 from mcp_host.agent import VibeShoppingAgent
 from mcp_host.tts import VOICES
 from mcp_host.ui import UI
+
+if TYPE_CHECKING:
+    from openai.types.chat import ChatCompletionMessageParam
 
 
 vibe_shopping_agent = VibeShoppingAgent()

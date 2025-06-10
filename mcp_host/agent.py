@@ -1,31 +1,30 @@
+from __future__ import annotations
+
 import json
 import os
-from typing import AsyncGenerator, Callable, Generator
+from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator
 
 import numpy as np
 from PIL import Image
 from openai import OpenAI
-from openai.types.chat import (
-    ChatCompletionMessageParam,
-    ChatCompletionSystemMessageParam,
-    ChatCompletionUserMessageParam,
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionToolMessageParam,
-    ChatCompletionMessageToolCallParam,
-    ChatCompletionToolParam,
-    ChatCompletionContentPartParam,
-    ChatCompletionContentPartTextParam,
-    ChatCompletionContentPartImageParam,
-)
-from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
-from openai.types.chat.chat_completion_message_tool_call_param import Function
-from openai.types.shared_params import FunctionDefinition
-from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.stt import speech_to_text
 from mcp_host.tts import stream_text_to_speech
 from utils import ImageUploader
+
+if TYPE_CHECKING:
+    from openai.types.chat import (
+        ChatCompletionMessageParam,
+        ChatCompletionSystemMessageParam,
+        ChatCompletionToolMessageParam,
+        ChatCompletionMessageToolCallParam,
+        ChatCompletionToolParam,
+        ChatCompletionContentPartParam,
+        ChatCompletionContentPartTextParam,
+        ChatCompletionContentPartImageParam,
+    )
+    from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 
 
 class VibeShoppingAgent:
@@ -60,7 +59,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
         ]
         self.model_name = model_name
 
-        self._mcp_clients = [
+        self._mcp_clients: list[MCPClient] = [
             self.agora_client,
             self.fewsats_client,
             self.virtual_try_client,
@@ -120,22 +119,25 @@ If a tool requires an input that you don't have based on your knowledge and the 
         user_message_contents: list[ChatCompletionContentPartParam] = []
         if input_image is not None:
             user_message_contents.extend(
-                self._build_input_image_content(input_image, "input_image")
+                list(self._build_input_image_content(input_image, "input_image"))
             )
             if input_mask is not None:
                 user_message_contents.extend(
-                    self._build_input_image_content(input_mask, "input_mask")
+                    list(self._build_input_image_content(input_mask, "input_mask"))
                 )
 
         user_text_message = speech_to_text(user_speech)
         user_message_contents.append(
-            ChatCompletionContentPartTextParam(type="text", text=user_text_message)
+            {
+                "type": "text",
+                "text": user_text_message,
+            }
         )
         chat_history.append(
-            ChatCompletionUserMessageParam(
-                role="user",
-                content=user_message_contents,
-            )
+            {
+                "role": "user",
+                "content": user_message_contents,
+            }
         )
 
         while True:
@@ -155,11 +157,11 @@ If a tool requires an input that you don't have based on your knowledge and the 
 
             chat_history.extend(
                 [
-                    ChatCompletionAssistantMessageParam(
-                        role="assistant",
-                        content="".join(text_chunks),
-                        tool_calls=tool_calls,
-                    ),
+                    {
+                        "role": "assistant",
+                        "content": "".join(text_chunks),
+                        "tool_calls": tool_calls,
+                    },
                     *tool_responses,
                 ]
             )
@@ -215,38 +217,40 @@ If a tool requires an input that you don't have based on your knowledge and the 
             tool_args: str = tool_call.function.arguments  # type: ignore
 
             tool_calls.append(  # type: ignore
-                ChatCompletionMessageToolCallParam(
-                    id=call_id,
-                    type="function",
-                    function=Function(name=tool_name, arguments=tool_args),
-                )
+                {
+                    "id": call_id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "arguments": tool_args,
+                    },
+                }
             )
 
             mcp_client = self._get_mcp_client_for_tool(tool_name)
             if mcp_client is None:
                 print(f"Tool {tool_name} not found in any MCP client.")
                 tool_responses.append(
-                    ChatCompletionToolMessageParam(
-                        role="tool",
-                        tool_call_id=call_id,
-                        content=f"Unable to find tool '{tool_name}'.",
-                    )
+                    {
+                        "role": "tool",
+                        "tool_call_id": call_id,
+                        "content": f"Unable to find tool '{tool_name}'.",
+                    }
                 )
             else:
                 try:
                     if tool_name == "display":
-                        # Handle the display tool separately
                         args = json.loads(tool_args) if tool_args else {}
                         update_ui(
                             args.get("products"),
                             args.get("image_url"),
                             args.get("clear_ui"),
                         )
-                        tool_response = ChatCompletionToolMessageParam(
-                            role="tool",
-                            tool_call_id=call_id,
-                            content="Content displayed successfully.",
-                        )
+                        tool_response: ChatCompletionToolMessageParam = {
+                            "role": "tool",
+                            "tool_call_id": call_id,
+                            "content": "Content displayed successfully.",
+                        }
                     else:
                         tool_response = await mcp_client.call_tool(
                             call_id=call_id,
@@ -257,11 +261,11 @@ If a tool requires an input that you don't have based on your knowledge and the 
                 except Exception as e:
                     print(f"Error calling tool {tool_name}: {e}")
                     tool_responses.append(
-                        ChatCompletionToolMessageParam(
-                            role="tool",
-                            tool_call_id=call_id,
-                            content=f"Error calling tool '{tool_name}', Error: {str(e)[:500]}",  # Limit error message length to avoid flooding the chat
-                        )
+                        {
+                            "role": "tool",
+                            "tool_call_id": call_id,
+                            "content": f"Error calling tool '{tool_name}', Error: {str(e)[:500]}",
+                        }
                     )
 
     def _build_input_image_content(
@@ -271,31 +275,33 @@ If a tool requires an input that you don't have based on your knowledge and the 
         Build the input image content for the chat message.
         """
         image_url = self.image_uploader.upload_image(
-            input_image, f"{image_label}.{input_image.format or 'webp'}".lower()
+            input_image, f"{image_label}.{(input_image.format or 'webp').lower()}"
         )
         return (
-            ChatCompletionContentPartTextParam(
-                type="text",
-                text=f"{image_label}_url: {image_url}\n{image_label}:",
-            ),
-            ChatCompletionContentPartImageParam(
-                type="image_url",
-                image_url=ImageURL(url=image_url),
-            ),
+            {
+                "type": "text",
+                "text": f"{image_label}_url: {image_url}\n{image_label}:",
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url,
+                },
+            },
         )
 
 
 def _build_display_tool_definition() -> ChatCompletionToolParam:
-    return ChatCompletionToolParam(
-        type="function",
-        function=FunctionDefinition(
-            name="display",
-            description="""Show content to the user, or clear the UI if none of the inputs are provided.
+    return {
+        "type": "function",
+        "function": {
+            "name": "display",
+            "description": """Show content to the user, or clear the UI if none of the inputs are provided.
 You can use this tool whenever you want to show tool results or when the user requests to see something that you have access to, like a list of products, specific product(s) from the conversation history, an image, or cart items.
 
 You can only pass one argument at a time, either products or image_url, or clear_ui.
 """,
-            parameters={
+            "parameters": {
                 "type": "object",
                 "properties": {
                     "products": {
@@ -323,5 +329,5 @@ You can only pass one argument at a time, either products or image_url, or clear
                     },
                 },
             },
-        ),
-    )
+        },
+    }
