@@ -7,9 +7,9 @@ import json
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.types import CallToolResult, TextContent, ImageContent
 
 if TYPE_CHECKING:
-    from mcp.types import CallToolResult, TextContent, ImageContent
     from openai.types.chat import (
         ChatCompletionToolMessageParam,
         ChatCompletionContentPartParam,
@@ -198,7 +198,12 @@ class AgoraMCPClient(MCPClient):
         response: CallToolResult,
         tool_args: dict[str, Any] | None = None,
     ) -> list[ChatCompletionContentPartParam]:
-        content = cast(TextContent, response.content[0])
+        contents = cast(list[TextContent], response.content)
+        status_code = contents[0].text
+        if status_code != "200":
+            return await super().post_tool_call(call_id, tool_name, response, tool_args)
+        
+        content = contents[1]  # The second content part should be the JSON response
         json_data = json.loads(content.text)
         if json_data.get("status") != "success" or "Products" not in json_data:
             # If not successful or not a product search/list response, return the
@@ -213,7 +218,7 @@ class AgoraMCPClient(MCPClient):
         for product in products:
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
             for key in self.FIELDS_TO_REMOVE:
-                del product[key]
+                product.pop(key, None)
 
             # We add the product data first then show its image if available.
             # The LLM will see:
