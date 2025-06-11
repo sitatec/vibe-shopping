@@ -56,17 +56,16 @@ async def stream_text_to_speech(
     
     kokoro_lang = voice[0]
     standard_lang_code = KOKORO_TO_STD_LANG[kokoro_lang]
-    pipe = pipes[kokoro_lang]
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
-        for _, __, result in text_to_speech(text, pipe, voice=voice):
+        for _, __, result in text_to_speech(text, pipe_key=kokoro_lang, voice=voice):
             yield 24000, result.audio.numpy()
 
 
 @spaces.GPU(duration=20)
 def text_to_speech(
     text: str,
-    pipe: KPipeline,
+    pipe_key: str,
     voice: str | None = None,
 ):
-    yield from pipe(text, voice=voice)
+    yield from pipes[pipe_key](text, voice=voice)
