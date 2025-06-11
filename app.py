@@ -126,13 +126,18 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
     gradio_client = gr.State()
     vibe_shopping_app.load(set_client_for_session, None, gradio_client)
 
+    debuging_options = {
+        "Echo user speech": "debug_echo_user_speech",
+        "Use Openai API (Sambanova) STT": "debug_use_openai_api_stt",
+    }
+
     chat_history = gr.State(value=[])
     displayed_products = gr.State(value=[])
     displayed_image = gr.State(value=None)
     with gr.Column():
         voice = gr.Dropdown(
             label="Language & Voice",
-            choices=list(VOICES.items()),
+            choices=list(VOICES.items()) + list(debuging_options.items()),
             value=list(VOICES.values())[0],  # Default to the first voice
             # info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
             scale=0,

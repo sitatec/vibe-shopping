@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import time
@@ -14,6 +15,7 @@ from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.tts.gradio_api_tts import (
     stream_text_to_speech as online_stream_text_to_speech,
 )
+from mcp_host.stt.openai_stt import speech_to_text as openai_speech_to_text
 from utils import ImageUploader
 
 IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
@@ -122,6 +124,11 @@ The maximum number of products you can search at once is 10, don't exceed this l
         input_mask: Image.Image | None = None,
         gradio_client: Client | None = None,
     ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
+        if voice == "debug_echo_user_speech":
+            await asyncio.sleep(1)  # Simulate some processing delay
+            print(f"Debug echo user speech: {user_speech}")
+            yield user_speech
+
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
@@ -140,8 +147,12 @@ The maximum number of products you can search at once is 10, don't exceed this l
                 )
 
         t = time.time()
-        user_text_message = speech_to_text(user_speech).strip()
+        if voice == "debug_use_openai_api_stt":
+            user_text_message = openai_speech_to_text(user_speech).strip()
+        else:
+            user_text_message = speech_to_text(user_speech).strip()
         print(f"Speech to text took {time.time() - t:.2f} seconds")
+        
         user_message_contents.append(
             {
                 "type": "text",
@@ -247,7 +258,7 @@ The maximum number of products you can search at once is 10, don't exceed this l
             print("Using on-device text-to-speech.")
             async for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
                 yield ai_speech
-                
+
         print("LLM stream completed.")
         print(f"Pending tool calls: {pending_tool_calls}")
         for tool_call in pending_tool_calls.values():
