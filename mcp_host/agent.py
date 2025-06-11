@@ -128,6 +128,7 @@ The maximum number of products you can search at once is 10, don't exceed this l
             await asyncio.sleep(1)  # Simulate some processing delay
             print(f"Debug echo user speech: {user_speech}")
             yield user_speech
+            return
 
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
@@ -149,10 +150,11 @@ The maximum number of products you can search at once is 10, don't exceed this l
         t = time.time()
         if voice == "debug_use_openai_api_stt":
             user_text_message = openai_speech_to_text(user_speech).strip()
+            voice = None # Use default
         else:
             user_text_message = speech_to_text(user_speech).strip()
         print(f"Speech to text took {time.time() - t:.2f} seconds")
-        
+
         user_message_contents.append(
             {
                 "type": "text",
