@@ -1,4 +1,5 @@
 import io
+import time
 from typing import AsyncGenerator, Iterator
 import base64
 import wave
@@ -41,9 +42,10 @@ async def stream_text_to_speech(
             text=text, voice=voice, speed=1, use_gpu=True, api_name="/stream"
         )
         print("Job submitted, waiting for audio chunks...")
+        t = time.time()
         for audio_chunk in audio:
-            print(f"Received audio chunk: {audio_chunk[:10]}...")
             yield base64_to_audio_array(audio_chunk)
+            print(f"Received audio chunk: {audio_chunk[:10]} in {time.time() - t:.2f} seconds")
 
 
 def base64_to_audio_array(base64_string):
