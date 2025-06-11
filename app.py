@@ -168,4 +168,4 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         show_progress="hidden",
     )
 
-    vibe_shopping_app.launch(share=IS_LOCAL)
+    vibe_shopping_app.launch()

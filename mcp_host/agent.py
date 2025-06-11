@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import time
@@ -12,14 +11,18 @@ from PIL import Image
 from openai import OpenAI
 
 from mcp_client import MCPClient, AgoraMCPClient
-from mcp_host.stt.openai_stt import speech_to_text
-from mcp_host.tts.fastrtc_tts import (
-    stream_text_to_speech as on_device_stream_text_to_speech,
-)
 from mcp_host.tts.gradio_api_tts import (
     stream_text_to_speech as online_stream_text_to_speech,
 )
 from utils import ImageUploader
+
+IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
+if IS_HF_ZERO_GPU:
+    from mcp_host.tts.hf_zero_gpu_tts import stream_text_to_speech
+    from mcp_host.stt.hf_zero_gpu_stt import speech_to_text
+else:
+    from mcp_host.stt.openai_stt import speech_to_text
+    from mcp_host.tts.fastrtc_tts import stream_text_to_speech
 
 if TYPE_CHECKING:
     from openai.types.chat import (
@@ -230,6 +233,10 @@ Don't show too many item at once, limit your queries to a maximum of 20 items pe
                         else:
                             pending_tool_calls[index].function = tool_call.function
 
+        if IS_HF_ZERO_GPU:
+            print("Using text-to-speech on HF Zero GPU.")
+            async for audio_chunk in stream_text_to_speech(text_stream(), voice=voice):
+                yield audio_chunk
         if gradio_client is not None:
             print("Using online Gradio client for text-to-speech.")
             async for audio_chunk in online_stream_text_to_speech(
@@ -238,10 +245,9 @@ Don't show too many item at once, limit your queries to a maximum of 20 items pe
                 yield audio_chunk
         else:
             print("Using on-device text-to-speech.")
-            async for ai_speech in on_device_stream_text_to_speech(
-                text_stream(), voice=voice
-            ):
+            async for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
                 yield ai_speech
+                
         print("LLM stream completed.")
         print(f"Pending tool calls: {pending_tool_calls}")
         for tool_call in pending_tool_calls.values():
