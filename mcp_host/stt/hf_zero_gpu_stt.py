@@ -23,12 +23,9 @@ def speech_to_text(inputs: tuple[int, np.ndarray]) -> str:
     # Convert to mono if stereo
     if audio.ndim > 1:
         audio = audio.mean(axis=1)
-        
-    audio = audio.astype(np.float32)
-    peak = np.max(np.abs(audio))
-    print(f"Peak value before normalization: {peak}")
-    # if peak > 1e-9:  # small epsilon to guard against floating-point imprecision
-    #     audio = audio / peak
+
+    if audio.dtype == np.int16:
+        audio = audio.astype(np.float32) / 32768.0
 
     text: str = pipe({"sampling_rate": sampling_rate, "raw": audio})["text"]  # type: ignore
     return text
