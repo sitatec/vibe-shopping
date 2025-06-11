@@ -1,6 +1,5 @@
 import modal
 from configs import (
-    CHAT_TEMPLATE,
     vllm_image,
     hf_cache_vol,
     vllm_cache_vol,
@@ -40,10 +39,6 @@ def serve_llm():
     import subprocess
     import os
 
-    chat_template_path = "/root/chat-template.jinja"
-    with open(chat_template_path, "w") as f:
-        f.write(CHAT_TEMPLATE)
-
     cmd = [
         "vllm",
         "serve",
@@ -52,10 +47,8 @@ def serve_llm():
         MODEL_REVISION,
         "--uvicorn-log-level=info",
         "--tool-call-parser",
-        "mistral",
+        "hermes",
         "--enable-auto-tool-choice",
-        "--chat-template",
-        chat_template_path,
         "--limit-mm-per-prompt",
         "image=20",
         "--tensor-parallel-size",
@@ -66,8 +59,6 @@ def serve_llm():
         str(VLLM_PORT),
         "--api-key",
         os.environ["API_KEY"],
-        "--tensor-parallel-size",
-        str(N_GPU),
         "--enforce-eager"
     ]
 
