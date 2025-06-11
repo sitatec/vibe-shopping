@@ -38,6 +38,18 @@ app = modal.App("vibe-shopping-llm")
 def serve_llm():
     import subprocess
     import os
+    import requests
+
+    chat_template_path = "/root/chat_template.jinja"
+    if not os.path.exists(chat_template_path):
+        print("Downloading chat template...")
+        url = "https://raw.githubusercontent.com/edwardzjl/chat-templates/refs/heads/main/qwen2_5/chat_template.jinja"
+        response = requests.get(url)
+        response.raise_for_status()
+        with open(chat_template_path, "w") as f:
+            f.write(response.text)
+
+
 
     cmd = [
         "vllm",
@@ -59,7 +71,9 @@ def serve_llm():
         str(VLLM_PORT),
         "--api-key",
         os.environ["API_KEY"],
-        "--enforce-eager"
+        "--enforce-eager",
+        "--chat-template",
+        chat_template_path,
     ]
 
     subprocess.Popen(cmd)
