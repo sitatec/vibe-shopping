@@ -13,17 +13,17 @@ from openai import OpenAI
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.tts.gradio_api_tts import (
-    stream_text_to_speech as online_stream_text_to_speech,
+    stream_text_to_speech as gradio_api_stream_text_to_speech,
 )
-from mcp_host.stt.openai_stt import speech_to_text as openai_speech_to_text
 from utils import ImageUploader
 
 IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
 if IS_HF_ZERO_GPU:
     from mcp_host.tts.hf_zero_gpu_tts import stream_text_to_speech
-    from mcp_host.stt.hf_zero_gpu_stt import speech_to_text as zero_gpu_speech_to_text
+    from mcp_host.stt.hf_zero_gpu_stt import speech_to_text
 else:
     from mcp_host.tts.fastrtc_tts import stream_text_to_speech
+    from mcp_host.stt.openai_stt import speech_to_text
 
 if TYPE_CHECKING:
     from openai.types.chat import (
@@ -147,11 +147,7 @@ The maximum number of products you can search at once is 10, don't exceed this l
                 )
 
         t = time.time()
-        if voice == "debug_use_hf_zero_gpu_stt":
-            user_text_message = zero_gpu_speech_to_text(user_speech).strip()
-            voice = None # Use default since we used `debug_use_hf_zero_gpu_stt` which is not a real voice
-        else:
-            user_text_message = openai_speech_to_text(user_speech).strip()
+        user_text_message = speech_to_text(user_speech).strip()
         print(f"Speech to text took {time.time() - t:.2f} seconds")
 
         user_message_contents.append(
@@ -245,18 +241,13 @@ The maximum number of products you can search at once is 10, don't exceed this l
                         else:
                             pending_tool_calls[index].function = tool_call.function
 
-        if IS_HF_ZERO_GPU:
-            print("Using text-to-speech on HF Zero GPU.")
-            async for audio_chunk in stream_text_to_speech(text_stream(), voice=voice):
-                yield audio_chunk
         if gradio_client is not None:
             print("Using online Gradio client for text-to-speech.")
-            async for audio_chunk in online_stream_text_to_speech(
+            async for audio_chunk in gradio_api_stream_text_to_speech(
                 text_stream(), client=gradio_client, voice=voice
             ):
                 yield audio_chunk
         else:
-            print("Using on-device text-to-speech.")
             async for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
                 yield ai_speech
 

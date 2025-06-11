@@ -216,6 +216,11 @@ class AgoraMCPClient(MCPClient):
 
         new_content: list[ChatCompletionContentPartParam] = []
         products: list[dict[str, Any]] = json_data["Products"]
+
+        if len(products) > 10:
+            products = products[:10]  # Limit to first 10 products
+            print(f"Received {len(products)} products, limiting to 10 for context.")
+
         for product in products:
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
             for key in self.FIELDS_TO_REMOVE:
