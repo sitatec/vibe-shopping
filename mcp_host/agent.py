@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+import time
 from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator
 
 from gradio_client import Client
@@ -76,6 +78,7 @@ Don't show too many item at once, limit your queries to a maximum of 20 items pe
         ]
         self.display_tool = _build_display_tool_definition()
         self.image_uploader = image_uploader
+        self.clients_connected = False
 
     async def connect_clients(
         self, fewsats_api_key: str = os.getenv("FEWSATS_API_KEY", "FAKE_API_KEY")
@@ -92,6 +95,7 @@ Don't show too many item at once, limit your queries to a maximum of 20 items pe
             + await self.virtual_try_client.tools
             + [self.display_tool]
         )
+        self.clients_connected = True
 
     def _get_mcp_client_for_tool(self, tool_name: str) -> MCPClient | None:
         try:
@@ -132,7 +136,9 @@ Don't show too many item at once, limit your queries to a maximum of 20 items pe
                     list(self._build_input_image_content(input_mask, "input_mask"))
                 )
 
+        t = time.time()
         user_text_message = speech_to_text(user_speech).strip()
+        print(f"Speech to text took {time.time() - t:.2f} seconds")
         user_message_contents.append(
             {
                 "type": "text",
@@ -192,16 +198,6 @@ Don't show too many item at once, limit your queries to a maximum of 20 items pe
         ],
         gradio_client: Client | None = None,
     ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
-        def fake_text_stream():
-            yield "How can I assist you today?"
-
-        async for audio_chunk in online_stream_text_to_speech(
-            fake_text_stream(), client=gradio_client, voice=voice
-        ):
-            yield audio_chunk
-
-        return
-
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,

@@ -98,7 +98,9 @@ async def handle_audio_stream(
     )  # None for resetting the input_image state
 
 async def set_client_for_session(request: gr.Request):
-    await vibe_shopping_agent.connect_clients()
+    if not vibe_shopping_agent.clients_connected:
+        await vibe_shopping_agent.connect_clients()
+        
     if 'x-ip-token' not in request.headers:
         # Probably running in a local environment
         return Client("sitatech/Kokoro-TTS")
@@ -160,7 +162,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
-        lambda s, a: (s, a),
+        lambda s, a, b, c: (s, a, b, c),
         outputs=[chat_history, displayed_products, displayed_image, input_image],
         queue=False,
         show_progress="hidden",
