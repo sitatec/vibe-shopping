@@ -49,7 +49,8 @@ def serve_llm():
         with open(chat_template_path, "w") as f:
             f.write(response.text)
 
-
+    min_pixels = 128 * 28 * 28  # min 128 tokens
+    max_pixels = 340 * 28 * 28  # max 340 tokens (~512x512 image)
 
     cmd = [
         "vllm",
@@ -62,7 +63,7 @@ def serve_llm():
         "hermes",
         "--enable-auto-tool-choice",
         "--limit-mm-per-prompt",
-        "image=20",
+        "image=10",
         "--tensor-parallel-size",
         str(N_GPU),
         "--host",
@@ -74,6 +75,14 @@ def serve_llm():
         "--enforce-eager",
         "--chat-template",
         chat_template_path,
+        # Minimize token usage
+        "--mm-processor-kwargs=",
+        f"{{'min_pixels': {min_pixels}, 'max_pixels': {max_pixels}}}",
+        # Extend context length to 65536 tokens
+        "--rope-scaling",
+        '{"rope_type":"yarn","factor":2.0,"original_max_position_embeddings":32768}',
+        "--max-model-len",
+        "65536"
     ]
 
     subprocess.Popen(cmd)
