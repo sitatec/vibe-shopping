@@ -9,3 +9,4 @@ fastrtc[vad,tts]>=0.0.26
 gradio
 torchaudio
 gradio_client
+aiortc==1.11.0

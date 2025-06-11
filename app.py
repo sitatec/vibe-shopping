@@ -16,7 +16,6 @@ if IS_LOCAL:
 
     print("OPENAI_API_BASE_URL: ", os.getenv("OPENAI_API_BASE_URL"))
 
-import asyncio
 import gradio as gr
 from gradio_client import Client
 import numpy as np
@@ -40,9 +39,6 @@ gr.set_static_paths("static/")
 
 
 vibe_shopping_agent = VibeShoppingAgent()
-
-asyncio.get_event_loop().run_until_complete(vibe_shopping_agent.connect_clients())
-
 
 def handle_image_upload(
     image_with_mask: dict | None,
@@ -89,8 +85,8 @@ async def handle_audio_stream(
         chat_history=chat_history,
         voice=voice,
         update_ui=update_ui,
-        input_image=image,
-        input_mask=mask,
+        # input_image=image,
+        # input_mask=mask,
         gradio_client=gradio_client,
     ):
         print(f"AI Speech In handler: {ai_speech}")
@@ -101,7 +97,8 @@ async def handle_audio_stream(
         chat_history, displayed_products, displayed_image, None
     )  # None for resetting the input_image state
 
-def set_client_for_session(request: gr.Request):
+async def set_client_for_session(request: gr.Request):
+    await vibe_shopping_agent.connect_clients()
     if 'x-ip-token' not in request.headers:
         # Probably running in a local environment
         return Client("sitatech/Kokoro-TTS")
@@ -134,10 +131,10 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
-            rtc_configuration=get_cloudflare_turn_credentials_async if not IS_LOCAL else None,
+            rtc_configuration=get_cloudflare_turn_credentials if not IS_LOCAL else None,
             server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None,
             scale=0,
-            time_limit=90,
+            time_limit=500,
         )
         with gr.Accordion(open=False, label="Input Image"):
             gr.Markdown(
@@ -147,7 +144,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
                 "For example if you want to try trying on a shirt, draw a mask over the upper body of the person in the image. "
                 "If you want to see how a furniture looks in a room, draw a mask over the area where you want it to be placed... "
             )
-            input_image = gr.ImageMask(type="pil")
+            input_image = gr.ImageMask(value=None,type="pil")
 
     audio_stream.stream(
         ReplyOnPause(handle_audio_stream),  # type: ignore

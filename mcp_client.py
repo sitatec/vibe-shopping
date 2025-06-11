@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 from contextlib import AsyncExitStack
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, cast
 import json
 
@@ -118,13 +119,13 @@ class MCPClient:
         print(
             f"Send tool call to mcp server: {tool_name} with args: {tool_args} (call_id: {call_id})"
         )
-        response = await self.session.call_tool(tool_name, tool_args)  # type: ignore
-        print(
-            f"Response from mcp server: {tool_name} with args: {tool_args} (call_id: {call_id}) :"
+        response = await self.session.call_tool(  # type: ignore
+            tool_name, tool_args, read_timeout_seconds=timedelta(seconds=10)
         )
-        print(response.model_dump_json(indent=2))
         content = await self.post_tool_call(call_id, tool_name, response, tool_args)
-        print(f"Processed tool call response content: {content}")
+        print(
+            f"Received response from mcp server: {tool_name} with args: {tool_args} (call_id: {call_id}) "
+        )
         return {
             "role": "tool",
             "tool_call_id": call_id,
@@ -202,7 +203,7 @@ class AgoraMCPClient(MCPClient):
         status_code = contents[0].text
         if status_code != "200":
             return await super().post_tool_call(call_id, tool_name, response, tool_args)
-        
+
         content = contents[1]  # The second content part should be the JSON response
         json_data = json.loads(content.text)
         if json_data.get("status") != "success" or "Products" not in json_data:

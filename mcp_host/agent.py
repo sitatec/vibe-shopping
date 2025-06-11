@@ -42,11 +42,13 @@ When you get a response from a tool, if it contains something displayable and re
 Then, you can comment on it, or ask the user's opinion, just like a human would do in a conversation. 
 Always ask the user for confirmation before taking any action that requires payment or purchase.
 If a tool requires an input that you don't have based on your knowledge and the conversation history, you should ask the user for it. For example, if the user asks to try a product, but you don't have the target image, you should ask the user to provide it.
+
+Don't show too many item at once, limit your queries to a maximum of 20 items per request which is the maximum the system can handle at once.
 """
 
     def __init__(
         self,
-        model_name: str = "RedHatAI/Mistral-Small-3.1-24B-Instruct-2503-FP8-dynamic",
+        model_name: str = "BCCard/Qwen2.5-VL-32B-Instruct-FP8-Dynamic",
         openai_api_key: str = os.getenv("OPENAI_API_KEY", ""),
         openai_api_base_url: str = os.getenv("OPENAI_API_BASE_URL", ""),
         image_uploader: ImageUploader = ImageUploader(),
@@ -130,7 +132,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
                     list(self._build_input_image_content(input_mask, "input_mask"))
                 )
 
-        user_text_message = speech_to_text(user_speech)
+        user_text_message = speech_to_text(user_speech).strip()
         user_message_contents.append(
             {
                 "type": "text",
@@ -175,8 +177,8 @@ If a tool requires an input that you don't have based on your knowledge and the 
             if not tool_responses:
                 print("No tool responses, ending chat loop.")
                 break
-            print(f"Tool responses: {tool_responses}")
-            print(f"Continuing Agent loop with chat history: {chat_history}")
+            print(f"Num tool responses: {len(tool_responses)}")
+            print("Continuing Agent loop")
 
     async def _send_to_llm(
         self,
@@ -190,6 +192,16 @@ If a tool requires an input that you don't have based on your knowledge and the 
         ],
         gradio_client: Client | None = None,
     ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
+        def fake_text_stream():
+            yield "How can I assist you today?"
+
+        async for audio_chunk in online_stream_text_to_speech(
+            fake_text_stream(), client=gradio_client, voice=voice
+        ):
+            yield audio_chunk
+
+        return
+
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
@@ -286,7 +298,7 @@ If a tool requires an input that you don't have based on your knowledge and the 
                             tool_name=tool_name,
                             tool_args=json.loads(tool_args) if tool_args else None,
                         )
-                    print(f"Tool response: {tool_response}")
+                    print("Tool responded")
                     tool_responses.append(tool_response)
                 except Exception as e:
                     print(f"Error calling tool {tool_name}: {e}")

@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import ImageContent
 import modal
 
-mcp = FastMCP("Fewsats MCP Server")
+mcp = FastMCP("Virtual Try MCP Server")
 _virtual_try_model = None
 
 
