@@ -128,7 +128,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
 
     debuging_options = {
         "Echo user speech": "debug_echo_user_speech",
-        "Use Openai API (Sambanova) STT": "debug_use_openai_api_stt",
+        "USE HF ZeroGPU STT": "debug_use_hf_zero_gpu_stt",
     }
 
     chat_history = gr.State(value=[])

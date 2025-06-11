@@ -21,9 +21,8 @@ from utils import ImageUploader
 IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
 if IS_HF_ZERO_GPU:
     from mcp_host.tts.hf_zero_gpu_tts import stream_text_to_speech
-    from mcp_host.stt.hf_zero_gpu_stt import speech_to_text
+    from mcp_host.stt.hf_zero_gpu_stt import speech_to_text as zero_gpu_speech_to_text
 else:
-    from mcp_host.stt.openai_stt import speech_to_text
     from mcp_host.tts.fastrtc_tts import stream_text_to_speech
 
 if TYPE_CHECKING:
@@ -148,11 +147,11 @@ The maximum number of products you can search at once is 10, don't exceed this l
                 )
 
         t = time.time()
-        if voice == "debug_use_openai_api_stt":
-            user_text_message = openai_speech_to_text(user_speech).strip()
-            voice = None # Use default
+        if voice == "debug_use_hf_zero_gpu_stt":
+            user_text_message = zero_gpu_speech_to_text(user_speech).strip()
+            voice = None # Use default since we used `debug_use_hf_zero_gpu_stt` which is not a real voice
         else:
-            user_text_message = speech_to_text(user_speech).strip()
+            user_text_message = openai_speech_to_text(user_speech).strip()
         print(f"Speech to text took {time.time() - t:.2f} seconds")
 
         user_message_contents.append(
