@@ -21,8 +21,8 @@ def speech_to_text(inputs: tuple[int, np.ndarray]) -> str:
     sampling_rate, audio = inputs
     print(f"Processing audio with sampling rate: {sampling_rate}, shape: {audio.shape}")
     # Convert to mono if stereo
-    if audio.ndim > 1:
-        audio = audio.mean(axis=1)
+    if audio.ndim == 2:
+        audio = audio.squeeze()
 
     if audio.dtype == np.int16:
         audio = audio.astype(np.float32) / 32768.0
