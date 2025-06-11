@@ -77,7 +77,7 @@ def serve_llm():
         chat_template_path,
         # Minimize token usage
         "--mm-processor-kwargs",
-        f"{{'min_pixels': {min_pixels}, 'max_pixels': {max_pixels}}}",
+        f'{{"min_pixels": {min_pixels}, "max_pixels": {max_pixels}}}',
         # Extend context length to 65536 tokens
         "--rope-scaling",
         '{"rope_type":"yarn","factor":2.0,"original_max_position_embeddings":32768}',
