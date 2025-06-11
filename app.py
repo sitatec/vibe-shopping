@@ -4,15 +4,21 @@ import os
 from typing import TYPE_CHECKING
 
 
+IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
 IS_LOCAL = os.getenv("LOCALE_RUN") is not None
 print("IS_LOCAL:", IS_LOCAL)
 if IS_LOCAL:
     import dotenv
+
     dotenv.load_dotenv(override=True)
-    
+
     assert os.getenv("OPENAI_API_KEY") is not None, "OPENAI_API_KEY env var must be set"
-    assert os.getenv("OPENAI_API_BASE_URL")  is not None, "OPENAI_API_BASE_URL env var must be set"
-    assert os.getenv("STT_OPENAI_API_KEY") is not None, "STT_OPENAI_API_KEY env var must be set"
+    assert os.getenv("OPENAI_API_BASE_URL") is not None, (
+        "OPENAI_API_BASE_URL env var must be set"
+    )
+    assert os.getenv("STT_OPENAI_API_KEY") is not None, (
+        "STT_OPENAI_API_KEY env var must be set"
+    )
 
     print("OPENAI_API_BASE_URL: ", os.getenv("OPENAI_API_BASE_URL"))
 
@@ -39,6 +45,7 @@ gr.set_static_paths("static/")
 
 
 vibe_shopping_agent = VibeShoppingAgent()
+
 
 def handle_image_upload(
     image_with_mask: dict | None,
@@ -97,17 +104,23 @@ async def handle_audio_stream(
         chat_history, displayed_products, displayed_image, None
     )  # None for resetting the input_image state
 
+
 async def set_client_for_session(request: gr.Request):
     if not vibe_shopping_agent.clients_connected:
         await vibe_shopping_agent.connect_clients()
-        
-    if 'x-ip-token' not in request.headers:
+
+    if IS_HF_ZERO_GPU:
+        # No need to set client for HF Zero GPU, we will run tts & stt inference on the gpu
+        return None
+
+    if "x-ip-token" not in request.headers:
         # Probably running in a local environment
         return Client("sitatech/Kokoro-TTS")
-    
-    x_ip_token = request.headers['x-ip-token']
+
+    x_ip_token = request.headers["x-ip-token"]
 
     return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token})
+
 
 with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
     gradio_client = gr.State()
@@ -134,7 +147,9 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
             rtc_configuration=get_cloudflare_turn_credentials if not IS_LOCAL else None,
-            server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None,
+            server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000)
+            if not IS_LOCAL
+            else None,
             scale=0,
             time_limit=500,
         )
@@ -146,7 +161,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
                 "For example if you want to try trying on a shirt, draw a mask over the upper body of the person in the image. "
                 "If you want to see how a furniture looks in a room, draw a mask over the area where you want it to be placed... "
             )
-            input_image = gr.ImageMask(value=None,type="pil")
+            input_image = gr.ImageMask(value=None, type="pil")
 
     audio_stream.stream(
         ReplyOnPause(handle_audio_stream),  # type: ignore
