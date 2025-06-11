@@ -26,6 +26,7 @@ def speech_to_text(inputs: tuple[int, np.ndarray]) -> str:
         
     audio = audio.astype(np.float32)
     peak = np.max(np.abs(audio))
+    print(f"Peak value before normalization: {peak}")
     if peak > 1e-9:  # small epsilon to guard against floating-point imprecision
         audio = audio / peak
 

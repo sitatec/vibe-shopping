@@ -62,7 +62,7 @@ async def stream_text_to_speech(
             yield 24000, audio
 
 
-@spaces.GPU(duration=20)
+@spaces.GPU(duration=10)
 def text_to_speech(
     text: str,
     pipe_key: str,

@@ -164,7 +164,10 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             input_image = gr.ImageMask(value=None, type="pil")
 
     audio_stream.stream(
-        ReplyOnPause(handle_audio_stream),  # type: ignore
+        ReplyOnPause(
+            handle_audio_stream,
+            input_sample_rate=16000,
+        ),
         inputs=[
             audio_stream,
             chat_history,
