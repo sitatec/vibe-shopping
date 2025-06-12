@@ -342,8 +342,8 @@ def _build_display_tool_definition() -> ChatCompletionToolParam:
         "type": "function",
         "function": {
             "name": "display",
-            "description": """Show content to the user, or clear the UI if none of the inputs are provided.
-You can use this tool whenever you want to show tool results or when the user requests to see something that you have access to, like a list of products, specific product(s) from the conversation history, an image, or cart items.
+            "description": """This tool Shows/Displays content to the user.
+You can use this tool whenever you want to show responses you get from other tools or when the user requests to see something that you have access to, like a list of products, specific product(s) from the conversation history, an image, or cart items.
 
 You can only pass one argument at a time, either products or image_url, or clear_ui.
 """,
