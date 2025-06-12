@@ -12,3 +12,4 @@ gradio_client
 aiortc==1.11.0
 aiohttp
 gradio_modal
+twilio

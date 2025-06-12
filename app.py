@@ -34,6 +34,7 @@ from fastrtc import (
     ReplyOnPause,
     get_cloudflare_turn_credentials_async,
     get_cloudflare_turn_credentials,
+    get_twilio_turn_credentials,
 )
 
 from mcp_host.agent import VibeShoppingAgent
@@ -170,11 +171,14 @@ with gr.Blocks(
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
             rtc_configuration=(
-                get_cloudflare_turn_credentials_async if not IS_LOCAL else None
+                get_twilio_turn_credentials() if not IS_LOCAL else None
             ),
-            server_rtc_configuration=(
-                get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
-            ),
+            # rtc_configuration=(
+            #     get_cloudflare_turn_credentials_async if not IS_LOCAL else None
+            # ),
+            # server_rtc_configuration=(
+            #     get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
+            # ),
             scale=0,
             time_limit=3600,
         )
