@@ -212,7 +212,7 @@ with gr.Blocks(
         show_progress="hidden",
     )
 
-    with Modal(visible=True) as modal:
+    with Modal(visible=True, allow_user_close=False) as modal:
         ColdBootUI()
 
     vibe_shopping_app.load(set_client_for_session, None, [gradio_client, modal])
