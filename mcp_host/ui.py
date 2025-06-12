@@ -141,3 +141,24 @@ def FullSizeImage(image_url, fit: str = "contain", border_radius=12) -> str:
             object-fit: {fit};
         " />
     """
+
+
+def ColdBootUI():
+    return gr.HTML(
+        """
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            text-align: center;
+        ">
+            <h2>Starting Inference Server...</h2>
+            <p style="font-size: 1.2rem; margin-top: 16px;">
+                If this happen to be a cold-boot, it may take up to 2 minutes. Please wait...
+            </p>
+        </div>
+        """,
+    )
