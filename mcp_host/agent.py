@@ -168,6 +168,7 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
         )
         print(f"User message: {user_text_message}")
         print("Entering Agent loop")
+        t1 = time.time()
         while True:
             tool_calls: list[ChatCompletionMessageToolCallParam] = []
             tool_responses: list[ChatCompletionToolMessageParam] = []
@@ -183,6 +184,9 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
                 gradio_client=gradio_client,
             ):
                 yield ai_speech
+                print(
+                    f"AI speech received. Time taken since agent loop started: {time.time() - t1:.2f} seconds"
+                )
 
             chat_history.extend(
                 [
@@ -200,6 +204,8 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
                 break
             print(f"Num tool responses: {len(tool_responses)}")
             print("Continuing Agent loop")
+        print(f"Agent loop completed in {time.time() - t1:.2f} seconds")
+        print(f"Time taken for the entire chat: {time.time() - t:.2f} seconds")
 
     async def _send_to_llm(
         self,

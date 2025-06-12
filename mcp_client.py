@@ -122,7 +122,7 @@ class MCPClient:
             f"Send tool call to mcp server: {tool_name} with args: {tool_args} (call_id: {call_id})"
         )
         response = await self.session.call_tool(  # type: ignore
-            tool_name, tool_args, read_timeout_seconds=timedelta(seconds=10)
+            tool_name, tool_args, read_timeout_seconds=timedelta(seconds=20)
         )
         content = await self.post_tool_call(call_id, tool_name, response, tool_args)
         print(
