@@ -197,7 +197,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
-        lambda s, a: (s, a),
+        lambda *args: args,
         outputs=[chat_history, displayed_products, displayed_image, input_image],
         queue=False,
         show_progress="hidden",
