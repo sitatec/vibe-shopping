@@ -197,11 +197,7 @@ class AgoraMCPClient(MCPClient):
     def __init__(
         self, unique_name: str, image_uploader: ImageUploader = ImageUploader()
     ):
-        self._http_session: aiohttp.ClientSession = aiohttp.ClientSession(
-            # We are only using this client to check if images exist with a HEAD request before sending them to the LLM.
-            # So we can use a low timeout to reduce latency.
-            timeout=aiohttp.ClientTimeout(total=3)
-        )
+        self._http_session: aiohttp.ClientSession | None = None
         super().__init__(unique_name, image_uploader)
 
     async def post_tool_call(
@@ -237,7 +233,7 @@ class AgoraMCPClient(MCPClient):
         image_exists_tasks = await asyncio.gather(
             *[self._check_product_image_exists(product) for product in products]
         )
-        
+
         for product, image_exists in zip(products, image_exists_tasks):
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
             for key in self.FIELDS_TO_REMOVE:
@@ -283,7 +279,12 @@ class AgoraMCPClient(MCPClient):
             bool: True if the product has an image, False otherwise.
         """
         if "images" in product and product["images"]:
-            # Check if the first image URL is valid
+            if not self._http_session:
+                self._http_session = aiohttp.ClientSession(
+                    # We are only using this client to check if images exist with a HEAD request before sending them to the LLM.
+                    # So we can use a low timeout to reduce latency.
+                    timeout=aiohttp.ClientTimeout(total=3)
+                )
             try:
                 response = await self._http_session.head(
                     product["images"][0], allow_redirects=True
@@ -293,3 +294,8 @@ class AgoraMCPClient(MCPClient):
                 print(f"Error checking image URL: {e}")
                 return False
         return False
+    
+    async def close(self):
+        if self._http_session:
+            await self._http_session.close()
+        await super().close()
