@@ -13,7 +13,7 @@ def UI(products_state: gr.State, image_state: gr.State):
             justify-content: center;
             height: 600px;
             width: 100%;
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -21,9 +21,9 @@ def UI(products_state: gr.State, image_state: gr.State):
             text-align: center;
             padding: 32px;
         ">
-            <h1>Welcome to Vibe Shopping</h1>
-            <h3 >What the AI assistant want to show you will appear here.</h3>
-            <p style="font-size: 1.1rem; margin-top: 16px;">
+            <h1 style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">Welcome to Vibe Shopping</h1>
+            <h3 style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">What the AI assistant want to show you will appear here.</h3>
+            <p style="font-size: 1.1rem; margin-top: 16px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">
                 You can talk to the AI assistant to find products, virtual try on clothes, check how products like furniture look in your home, and more.</br>
                 You can also upload an image to show to the AI assistant what you are looking for or upload images of yourself to try on clothes.
             </p>

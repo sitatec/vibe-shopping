@@ -10,3 +10,4 @@ gradio
 torchaudio
 gradio_client
 aiortc==1.11.0
+aiohttp

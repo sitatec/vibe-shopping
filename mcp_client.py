@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 from contextlib import AsyncExitStack
 from datetime import timedelta
@@ -9,6 +10,7 @@ import json
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.types import CallToolResult, TextContent, ImageContent
+import aiohttp
 
 if TYPE_CHECKING:
     from openai.types.chat import (
@@ -192,6 +194,16 @@ class AgoraMCPClient(MCPClient):
         "agoraScore",
     ]
 
+    def __init__(
+        self, unique_name: str, image_uploader: ImageUploader = ImageUploader()
+    ):
+        self._http_session: aiohttp.ClientSession = aiohttp.ClientSession(
+            # We are only using this client to check if images exist with a HEAD request before sending them to the LLM.
+            # So we can use a low timeout to reduce latency.
+            timeout=aiohttp.ClientTimeout(total=3)
+        )
+        super().__init__(unique_name, image_uploader)
+
     async def post_tool_call(
         self,
         call_id: str,
@@ -218,10 +230,15 @@ class AgoraMCPClient(MCPClient):
         products: list[dict[str, Any]] = json_data["Products"]
 
         if len(products) > 10:
-            products = products[:10]  # Limit to first 10 products
             print(f"Received {len(products)} products, limiting to 10 for context.")
+            products = products[:10]  # Limit to first 10 products
 
-        for product in products:
+        # Check if images exist for each product and prepare the content
+        image_exists_tasks = await asyncio.gather(
+            *[self._check_product_image_exists(product) for product in products]
+        )
+        
+        for product, image_exists in zip(products, image_exists_tasks):
             # Remove all the fields we don't need to reduce token usage and preserver focused context.
             for key in self.FIELDS_TO_REMOVE:
                 product.pop(key, None)
@@ -237,7 +254,7 @@ class AgoraMCPClient(MCPClient):
                     "text": f"product_details: {json.dumps(product)}\nproduct_image:",
                 }
             )
-            if product.get("images"):
+            if image_exists:
                 new_content.append(
                     {
                         "type": "image_url",
@@ -255,3 +272,24 @@ class AgoraMCPClient(MCPClient):
                 )
 
         return new_content
+
+    async def _check_product_image_exists(self, product: dict[str, Any]) -> bool:
+        """
+        Check if the product has an image available.
+        Args:
+            product: The product dictionary to check.
+
+        Returns:
+            bool: True if the product has an image, False otherwise.
+        """
+        if "images" in product and product["images"]:
+            # Check if the first image URL is valid
+            try:
+                response = await self._http_session.head(
+                    product["images"][0], allow_redirects=True
+                )
+                return response.status == 200
+            except Exception as e:
+                print(f"Error checking image URL: {e}")
+                return False
+        return False
