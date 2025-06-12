@@ -39,6 +39,7 @@ def serve_llm():
     import subprocess
     import os
     import requests
+    import torch
 
     chat_template_path = "/root/chat_template.jinja"
     if not os.path.exists(chat_template_path):
@@ -51,8 +52,11 @@ def serve_llm():
 
     min_pixels = 128 * 28 * 28  # min 128 tokens
     max_pixels = 340 * 28 * 28  # max 340 tokens (~512x512 image)
-
+    
+    major, minor = torch.cuda.get_device_capability()
     cmd = [
+        "env",
+        f"TORCH_CUDA_ARCH_LIST={major}.{minor}",
         "vllm",
         "serve",
         MODEL_NAME,
