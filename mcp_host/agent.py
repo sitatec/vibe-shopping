@@ -48,12 +48,12 @@ Then, you can say what you think about the displayed item(s), tell how they fit 
 Always ask the user for confirmation before taking any action that requires payment or purchase.
 If a function requires an input that you don't have based on your knowledge and the conversation history, you should ask the user for it. For example, if the user asks to try a product, but you don't have the target image, you should ask the user to provide it.
 
-When calling a function, ALWAYS start with a short notification message to the user before calling it. 
-Here is an example you most follow: "One moment, I will search for products matching your request \n<tool_call>\n<call-function-to-search-products>\n</tool_call>". 
-Then when you get the response from the function, you say "Here are some products I found for you \n<tool_call>\n<call-function-to-display-products>\n</tool_call>".
+When calling a function, ALWAYS let the user know what you are doing while they are waiting. 
+Something like: One moment, I will search for products matching your request \n<tool_call>\n<call-function-to-search-products>\n</tool_call>. \
+Then when you get the response from the function, you can say Here are some products I found for you \n<tool_call>\n<call-function-to-display-products>\n</tool_call>.
 
 The maximum number of products you can search at once is 10, don't exceed this limit.
-Make sure to only output raw text. NEVER output formatted text, markdown or emoji.
+Make sure to only output raw text. NEVER output markdown or emoji.
 """
 
     def __init__(
@@ -84,7 +84,7 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
             self.fewsats_client,
             self.virtual_try_client,
         ]
-        self.display_tool = _build_display_tool_definition()
+        self.display_tool = _build_display_tool_definitions()
         self.image_uploader = image_uploader
         self.clients_connected = False
 
@@ -98,10 +98,10 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
         await self.virtual_try_client.connect_to_server("python", ["./mcp_server.py"])
 
         self.tools = (
-            await self.agora_client.tools
+            self.display_tool
+            + await self.agora_client.tools
             + await self.fewsats_client.tools
             + await self.virtual_try_client.tools
-            + [self.display_tool]
         )
         self.clients_connected = True
 
@@ -224,6 +224,7 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
             messages=chat_history,
             stream=True,
             tools=self.tools,
+            temperature=0.7,
         )
         pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
 
@@ -282,48 +283,52 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
                 }
             )
 
-            mcp_client = self._get_mcp_client_for_tool(tool_name)
-            if mcp_client is None:
-                print(f"Tool {tool_name} not found in any MCP client.")
-                tool_responses.append(
-                    {
+            try:
+                print(f"Calling tool {tool_name} with args: {tool_args}")
+                if tool_name.startswith("Display."):
+                    args = json.loads(tool_args) if tool_args else {}
+                    update_ui(
+                        args.get("products"),
+                        args.get("image_url"),
+                        tool_name == "Display.clear_display",
+                    )
+                    tool_response: ChatCompletionToolMessageParam = {
                         "role": "tool",
                         "tool_call_id": call_id,
-                        "content": f"Unable to find tool '{tool_name}'.",
+                        "content": (
+                            "Content displayed successfully."
+                            if tool_name != "clear_display"
+                            else "Display cleared."
+                        ),
                     }
-                )
-            else:
-                try:
-                    print(f"Calling tool {tool_name} with args: {tool_args}")
-                    if tool_name == "display":
-                        args = json.loads(tool_args) if tool_args else {}
-                        update_ui(
-                            args.get("products"),
-                            args.get("image_url"),
-                            args.get("clear_ui"),
+                else:
+                    mcp_client = self._get_mcp_client_for_tool(tool_name)
+                    if mcp_client is None:
+                        print(f"Tool {tool_name} not found in any MCP client.")
+                        tool_responses.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call_id,
+                                "content": f"Unable to find tool '{tool_name}'.",
+                            }
                         )
-                        tool_response: ChatCompletionToolMessageParam = {
-                            "role": "tool",
-                            "tool_call_id": call_id,
-                            "content": "Content displayed successfully.",
-                        }
                     else:
                         tool_response = await mcp_client.call_tool(
                             call_id=call_id,
                             tool_name=tool_name,
                             tool_args=json.loads(tool_args) if tool_args else None,
                         )
-                    print("Tool responded")
-                    tool_responses.append(tool_response)
-                except Exception as e:
-                    print(f"Error calling tool {tool_name}: {e}")
-                    tool_responses.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": call_id,
-                            "content": f"Error calling tool '{tool_name}', Error: {str(e)[:500]}",
-                        }
-                    )
+                print("Tool responded")
+                tool_responses.append(tool_response)
+            except Exception as e:
+                print(f"Error calling tool {tool_name}: {e}")
+                tool_responses.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call_id,
+                        "content": f"Error calling tool '{tool_name}', Error: {str(e)[:500]}",
+                    }
+                )
 
     def _build_input_image_content(
         self, input_image: Image.Image, image_label: str
@@ -348,43 +353,76 @@ Make sure to only output raw text. NEVER output formatted text, markdown or emoj
         )
 
 
-def _build_display_tool_definition() -> ChatCompletionToolParam:
-    return {
-        "type": "function",
-        "function": {
-            "name": "display",
-            "description": """This tool Shows/Displays content to the user.
-You can use this tool whenever you want to show responses you get from other tools or when the user requests to see something that you have access to, like a list of products, specific product(s) from the conversation history, an image, or cart items.
-
-You can only pass one argument at a time, either products or image_url, or clear_ui.
+def _build_display_tool_definitions() -> list[ChatCompletionToolParam]:
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": "Display.display_products",
+                "description": """
+    Display a list of products. Use this to show search results, cart items, or products from conversation history.
+    
+    Args:
+        products: A list of products to display. Each product should have a name, image URL, and formatted price.
+        example:
+            products: [
+                {
+                    "name": "Stylish Green Shirt",
+                    "image_url": "https://example.com/images/green-shirt.jpg",
+                    "price": "$29.99"
+                },
+                {
+                    "name": "Comfortable Jeans",
+                    "image_url": "https://example.com/images/jeans.jpg",
+                    "price": "$49.99"
+                }
+            ]
 """,
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "products": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "name": {"type": "string"},
-                                "image_url": {"type": "string"},
-                                "price": {"type": "string"},
+                "parameters": {
+                    "properties": {
+                        "products": {
+                            "items": {
+                                "additionalProperties": {"type": "string"},
+                                "type": "object",
                             },
-                            "required": ["name", "image_url", "price"],
-                        },
-                        "description": "A list of products to display from search results, cart items, or conversation history.",
+                            "title": "Products",
+                            "type": "array",
+                        }
                     },
-                    "image_url": {
-                        "type": "string",
-                        "description": "An optional URL of an image to display.",
-                    },
-                    "clear_ui": {
-                        "type": "boolean",
-                        "description": (
-                            "If true, clear the UI instead of displaying anything."
-                        ),
-                    },
+                    "required": ["products"],
+                    "title": "display_productsArguments",
+                    "type": "object",
                 },
             },
         },
-    }
+        {
+            "type": "function",
+            "function": {
+                "name": "Display.display_image",
+                "description": "Display a single standalone image. Use this for virtual try-on results, a specific product image requested by the user, or any other relevant single image.\n\nArgs:\n    image_url: The URL of the image to display.",
+                "parameters": {
+                    "properties": {
+                        "image_url": {
+                            "title": "Image URL",
+                            "type": "string",
+                        },
+                    },
+                    "required": ["image_url"],
+                    "title": "display_imageArguments",
+                    "type": "object",
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "Display.clear_display",
+                "description": "Clear any content currently displayed in the user interface. Removes everything from the visual display area.\n\nArgs: None",
+                "parameters": {
+                    "properties": {},
+                    "title": "clear_displayArguments",
+                    "type": "object",
+                },
+            },
+        },
+    ]

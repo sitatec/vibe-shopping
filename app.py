@@ -78,32 +78,36 @@ async def handle_audio_stream(
     image_with_mask: dict | None = None,
     gradio_client: Client | None = None,
 ):
-    image, mask = handle_image_upload(image_with_mask)
+    try:
+        image, mask = handle_image_upload(image_with_mask)
 
-    def update_ui(products, image, clear_ui):
-        nonlocal displayed_products, displayed_image
-        if clear_ui:
-            displayed_products = None
-            displayed_image = None
-        else:
-            displayed_products = products
-            displayed_image = image
+        def update_ui(products, image, clear_ui):
+            nonlocal displayed_products, displayed_image
+            if clear_ui:
+                displayed_products = None
+                displayed_image = None
+            else:
+                displayed_products = products
+                displayed_image = image
 
-    async for ai_speech in vibe_shopping_agent.chat(
-        user_speech=audio,
-        chat_history=chat_history,
-        voice=voice,
-        update_ui=update_ui,
-        input_image=image,
-        input_mask=mask,
-        gradio_client=gradio_client,
-    ):
-        # Yield the audio chunk to the WebRTC stream
-        yield ai_speech
+        async for ai_speech in vibe_shopping_agent.chat(
+            user_speech=audio,
+            chat_history=chat_history,
+            voice=voice,
+            update_ui=update_ui,
+            input_image=image,
+            input_mask=mask,
+            gradio_client=gradio_client,
+        ):
+            # Yield the audio chunk to the WebRTC stream
+            yield ai_speech
 
-    yield AdditionalOutputs(
-        chat_history, displayed_products, displayed_image, None
-    )  # None for resetting the input_image state
+        yield AdditionalOutputs(
+            chat_history, displayed_products, displayed_image, None
+        )  # None for resetting the input_image state
+    except Exception as e:
+        print(f"Error in handle_audio_stream: {e}")
+        raise gr.Error(f"An error occurred: {e}")
 
 
 async def set_client_for_session(request: gr.Request):
@@ -115,6 +119,7 @@ async def set_client_for_session(request: gr.Request):
         raise gr.Error(
             f"Inference server is not available. Status code: {health_check_response.status}"
         )
+
     if not vibe_shopping_agent.clients_connected:
         await vibe_shopping_agent.connect_clients()
 
@@ -128,16 +133,16 @@ async def set_client_for_session(request: gr.Request):
 
     x_ip_token = request.headers["x-ip-token"]
 
-    return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token}), Modal(visible=False)
+    return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token}), Modal(
+        visible=False
+    )
 
 
-with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
+with gr.Blocks(
+    theme=gr.themes.Ocean(),
+    css="#main-container { max-width: 1200px; margin: 0 auto; }",
+) as vibe_shopping_app:
     gradio_client = gr.State()
-
-    with Modal(visible=True) as modal:
-        ColdBootUI()
-
-    vibe_shopping_app.load(set_client_for_session, None, [gradio_client, modal])
 
     debuging_options = {
         "Echo user speech": "debug_echo_user_speech",
@@ -147,7 +152,7 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
     chat_history = gr.State(value=[])
     displayed_products = gr.State(value=[])
     displayed_image = gr.State(value=None)
-    with gr.Column():
+    with gr.Column(elem_id="main-container"):
         voice = gr.Dropdown(
             label="Language & Voice",
             choices=list(VOICES.items()) + list(debuging_options.items()),
@@ -164,14 +169,14 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
-            rtc_configuration=get_cloudflare_turn_credentials_async
-            if not IS_LOCAL
-            else None,
-            server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000)
-            if not IS_LOCAL
-            else None,
+            rtc_configuration=(
+                get_cloudflare_turn_credentials_async if not IS_LOCAL else None
+            ),
+            server_rtc_configuration=(
+                get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
+            ),
             scale=0,
-            time_limit=500,
+            time_limit=3600,
         )
         with gr.Accordion(open=False, label="Input Image"):
             gr.Markdown(
@@ -203,4 +208,8 @@ with gr.Blocks(theme=gr.themes.Ocean()) as vibe_shopping_app:
         show_progress="hidden",
     )
 
+    with Modal(visible=True) as modal:
+        ColdBootUI()
+
+    vibe_shopping_app.load(set_client_for_session, None, [gradio_client, modal])
     vibe_shopping_app.launch()

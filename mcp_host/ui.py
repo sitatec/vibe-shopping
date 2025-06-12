@@ -13,7 +13,7 @@ def UI(products_state: gr.State, image_state: gr.State):
             justify-content: center;
             height: 600px;
             width: 100%;
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping.webp');
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('{get_hf_space_file_url_prefix()}static/welcome-to-vibe-shopping-upscaled.webp');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
