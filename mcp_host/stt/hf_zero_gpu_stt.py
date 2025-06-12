@@ -13,6 +13,7 @@ pipe = pipeline(
     model=MODEL_NAME,
     chunk_length_s=30,
     device=device,
+    torch_dtype=torch.float16 if device != "cpu" else torch.float32,
 )
 
 
