@@ -205,11 +205,11 @@ class VibeShoppingAgent:
 
         # Normally, we should handle the chat history internally with self.chat_history, but since we are not persisting it,
         # we will rely on gradio's session state to keep the chat history per user session.
-        chat_history = (
-            # If no history is provided, start with the system prompt
-            chat_history
-            or [{"role": "system", "content": system_prompt or self.SYSTEM_PROMPT}]
-        )
+        if not chat_history:
+            # If history is empty, start with the system prompt
+            chat_history.append(
+                {"role": "system", "content": system_prompt or self.SYSTEM_PROMPT}
+            )
 
         user_message_contents: list[ChatCompletionContentPartParam] = []
         if input_image is not None:
