@@ -466,24 +466,9 @@ def _build_display_tool_definitions() -> list[ChatCompletionToolParam]:
                     "properties": {
                         "products": {
                             "items": {
-                                "properties": {
-                                    "name": {
-                                        "title": "Product Name",
-                                        "type": "string",
-                                    },
-                                    "image_url": {
-                                        "title": "Product Image URL",
-                                        "type": "string",
-                                    },
-                                    "price": {
-                                        "title": "Product Price",
-                                        "type": "string",
-                                    },
-                                },
                                 "type": "object",
-                                "required": ["name", "image_url", "price"],
                             },
-                            "title": "Products",
+                            "title": "Product List",
                             "type": "array",
                         }
                     },
