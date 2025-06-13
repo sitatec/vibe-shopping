@@ -45,7 +45,7 @@ class VibeShoppingAgent:
 </context>
 
 <instructions-and-rules>
-    When you get a response from a function, if it contains something displayable (products, images), you must display it, don't read it out loud. \
+    When you get a response from a function, if it contains something displayable (products, images), you must display it, don't read it out loud.
     Then, you can say what you think about the displayed item(s), tell how they fit to the user request, or ask the user's opinion, just like a human would do in a conversation.
     Every image you are shown will be followed by its URL for reference, so you can use it when you need to display an image in the UI.
 
@@ -53,7 +53,7 @@ class VibeShoppingAgent:
     If a function requires an input that you don't have based on your knowledge and the conversation history, you should ask the user for it. For example, if the user asks to try on a product, but you don't have the target image, you should ask the user to provide it.
 
     When calling a function, let the user know what you are doing while they are waiting. 
-    Something like: One moment, I will search for products matching your request \n<tool_call>\n<call-function-to-search-products>\n</tool_call>. \
+    Something like: One moment, I will search for products matching your request \n<tool_call>\n<call-function-to-search-products>\n</tool_call>.
     Then when you get the response from the function, you can say Here are some products I found for you \n<tool_call>\n<call-function-to-display-products>\n</tool_call>.
 </instructions-and-rules>
 

@@ -201,6 +201,7 @@ with gr.Blocks(
                 "You can change the LLM parameters to control the behavior of the AI assistant. "
                 "For example, you can make it more creative or more focused on specific tasks."
             )
+
             with gr.Row():
                 with gr.Column():
                     temperature = gr.Slider(
@@ -210,6 +211,8 @@ with gr.Blocks(
                         value=0.7,
                         step=0.1,
                     )
+
+                with gr.Column():
                     top_p = gr.Slider(
                         label="Top P",
                         minimum=0.0,
@@ -218,10 +221,11 @@ with gr.Blocks(
                         step=0.1,
                     )
 
-                system_prompt = gr.Textbox(
-                    label="System Prompt",
-                    value=VibeShoppingAgent.SYSTEM_PROMPT,
-                )
+            system_prompt = gr.Textbox(
+                label="System Prompt",
+                value=VibeShoppingAgent.SYSTEM_PROMPT,
+                lines=20,
+            )
 
     audio_stream.stream(
         ReplyOnPause(handle_audio_stream),
