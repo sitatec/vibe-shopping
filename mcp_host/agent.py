@@ -60,6 +60,7 @@ class VibeShoppingAgent:
 <constraints>
     The maximum number of products you can search at once is 5, don't exceed this limit.
     Text formatting is forbidden! So make sure to only output raw plain text. Do not output markdown or emoji.
+    Always display products search results so the user can see them, not read them.
 </constraints>
 
 <example-1>
@@ -70,10 +71,10 @@ class VibeShoppingAgent:
     </tool_call>
     Tool:
     <tool_response>
-    product_details: {"_id": "id1", "name": "Sofa", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
+    product_details: {"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
     products_details: ["_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"]\nproduct_image: <image-content>
     ...
-    products_details: ["_id": "id5", "name": "Luxury Sofa", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"]\nproduct_image: <image-content>
+    products_details: ["_id": "id5", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"]\nproduct_image: <image-content>
     </tool_response>
     Assistant: I've found some great options you might like! Here they are
     <tool_call>
@@ -89,9 +90,9 @@ class VibeShoppingAgent:
     </tool_call>
     Tool:
     <tool_response>
-    product_details: {"_id": "id1", "name": "Gaming Laptop", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    product_details: {"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
     ...
-    products_details: ["_id": "id5", "name": "High-Performance Gaming Laptop", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"]\nproduct_image: <image-content>
+    products_details: ["_id": "id5", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"]\nproduct_image: <image-content>
     </tool_response>
     Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
     <tool_call>
@@ -107,9 +108,9 @@ class VibeShoppingAgent:
     </tool_call>
     Tool:
     <tool_response>
-    product_details: {"_id": "id1", "name": "Elegant Black Dress", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
+    product_details: {"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
     ...
-    products_details: ["_id": "id5", "name": "Stylish Red Dress", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"]\nproduct_image: <image-content>
+    products_details: ["_id": "id5", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"]\nproduct_image: <image-content>
     </tool_response>
     Assistant: Here are some beautiful dresses I found for you:
     <tool_call>
@@ -194,6 +195,7 @@ class VibeShoppingAgent:
         gradio_client: Client | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
+        system_prompt: str | None = None,
     ) -> Generator[tuple[int, np.ndarray], None, None]:
         if voice == "debug_echo_user_speech":
             time.sleep(1)  # Simulate some processing delay
@@ -205,8 +207,8 @@ class VibeShoppingAgent:
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
             # If no history is provided, start with the system prompt
-            chat_history or [{"role": "system", "content": self.SYSTEM_PROMPT}]
-        ).copy()  # Ensure we don't modify the original history
+            chat_history or [{"role": "system", "content": system_prompt or self.SYSTEM_PROMPT}]
+        )
 
         user_message_contents: list[ChatCompletionContentPartParam] = []
         if input_image is not None:
@@ -455,8 +457,22 @@ def _build_display_tool_definitions() -> list[ChatCompletionToolParam]:
                     "properties": {
                         "products": {
                             "items": {
-                                "additionalProperties": {"type": "string"},
+                                "properties": {
+                                    "name": {
+                                        "title": "Product Name",
+                                        "type": "string",
+                                    },
+                                    "image_url": {
+                                        "title": "Product Image URL",
+                                        "type": "string",
+                                    },
+                                    "price": {
+                                        "title": "Product Price",
+                                        "type": "string",
+                                    },
+                                },
                                 "type": "object",
+                                "required": ["name", "image_url", "price"],
                             },
                             "title": "Products",
                             "type": "array",

@@ -80,6 +80,7 @@ def handle_audio_stream(
     gradio_client: Client | None = None,
     temperature: float | None = None,
     top_p: float | None = None,
+    system_prompt: str | None = None,
 ):
     try:
         image, mask = handle_image_upload(image_with_mask)
@@ -93,6 +94,7 @@ def handle_audio_stream(
                 displayed_products = products
                 displayed_image = image
 
+        chat_history = chat_history.copy()
         for ai_speech in vibe_shopping_agent.chat(
             user_speech=audio,
             chat_history=chat_history,
@@ -103,6 +105,7 @@ def handle_audio_stream(
             gradio_client=gradio_client,
             temperature=temperature,
             top_p=top_p,
+            system_prompt=system_prompt,
         ):
             # Yield the audio chunk to the WebRTC stream
             yield ai_speech
@@ -199,19 +202,25 @@ with gr.Blocks(
                 "For example, you can make it more creative or more focused on specific tasks."
             )
             with gr.Row():
-                temperature = gr.Slider(
-                    label="Temperature",
-                    minimum=0.0,
-                    maximum=2.0,
-                    value=0.7,
-                    step=0.1,
-                )
-                top_p = gr.Slider(
-                    label="Top P",
-                    minimum=0.0,
-                    maximum=1.0,
-                    value=0.9,
-                    step=0.1,
+                with gr.Column():
+                    temperature = gr.Slider(
+                        label="Temperature",
+                        minimum=0.0,
+                        maximum=2.0,
+                        value=0.7,
+                        step=0.1,
+                    )
+                    top_p = gr.Slider(
+                        label="Top P",
+                        minimum=0.0,
+                        maximum=1.0,
+                        value=0.9,
+                        step=0.1,
+                    )
+
+                system_prompt = gr.Textbox(
+                    label="System Prompt",
+                    value=VibeShoppingAgent.SYSTEM_PROMPT,
                 )
 
     audio_stream.stream(
@@ -226,6 +235,7 @@ with gr.Blocks(
             gradio_client,
             temperature,
             top_p,
+            system_prompt,
         ],
         outputs=[audio_stream],
     )
