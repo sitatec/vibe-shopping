@@ -66,7 +66,7 @@ def serve_llm():
         "hermes",
         "--enable-auto-tool-choice",
         "--limit-mm-per-prompt",
-        "image=5",
+        "image=100",
         "--tensor-parallel-size",
         str(N_GPU),
         "--host",
