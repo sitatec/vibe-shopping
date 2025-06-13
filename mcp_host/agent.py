@@ -62,7 +62,7 @@ class VibeShoppingAgent:
     Text formatting is forbidden! So make sure to only output raw plain text. Do not output markdown or emoji.
 </constraints>
 
-<examples>
+<example-1>
     User: Can you find me a modern sofa?
     Assistant: Yes sure! Please wait while I search for a beautiful modern sofa for you.
     <tool_call>
@@ -73,14 +73,52 @@ class VibeShoppingAgent:
     product_details: {"_id": "id1", "name": "Sofa", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
     products_details: ["_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"]\nproduct_image: <image-content>
     ...
-    products_details: ["_id": "id10", "name": "Luxury Sofa", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"]\nproduct_image: <image-content>
+    products_details: ["_id": "id5", "name": "Luxury Sofa", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"]\nproduct_image: <image-content>
     </tool_response>
     Assistant: I've found some great options you might like! Here they are
     <tool_call>
     {"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://example.com/image.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://example.com/sofa.png", "price": "$299.99"}, ...{ "name": "Luxury Sofa", "image_url": "https://example.com/luxury-sofa.png", "price": "$999.99"}]}}
     </tool_call>
     Personally, I think the Stylish Green Sofa looks really nice and fits the modern style you asked for. What do you think? Would you like to see more details or try it virtually?
-</examples>
+</example-1>
+<example-2>
+    User: I would like to buy a new laptop for my son's birthday, he loves gaming, can you help me find one?
+    Assistant: Oh wow, happy birthday to your son! I can definitely help you find a great laptop that he will like. Give me a moment to search for some gaming laptops.
+    <tool_call>
+    {"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 5}}
+    </tool_call>
+    Tool:
+    <tool_response>
+    product_details: {"_id": "id1", "name": "Gaming Laptop", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    ...
+    products_details: ["_id": "id5", "name": "High-Performance Gaming Laptop", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"]\nproduct_image: <image-content>
+    </tool_response>
+    Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
+    <tool_call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
+    </tool_call>
+    I think the High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
+</example-2>
+<example_3>
+    User: I would like to buy a dress for a professional dinner
+    Assistant: Sure! I can help you find a nice dress for that occasion. One second please.
+    <tool_call>
+    {"name": "Agora.search_products", "arguments": {"q": "Event Dresses", "count": 5}}
+    </tool_call>
+    Tool:
+    <tool_response>
+    product_details: {"_id": "id1", "name": "Elegant Black Dress", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
+    ...
+    products_details: ["_id": "id5", "name": "Stylish Red Dress", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"]\nproduct_image: <image-content>
+    </tool_response>
+    Assistant: Here are some beautiful dresses I found for you:
+    <tool_call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Elegant Black Dress", "image_url": "https://example.com/elegant-black-dress.png", "price": "$199.99"}, ... { "name": "Stylish Red Dress", "image_url": "https://example.com/stylish-red-dress.png", "price": "$249.99"}]}}
+    </tool_call>
+    If you like standing out, I think the Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
+    User: Yes, I would like to try it on
+    Assistant: Great! Please upload a photo of yourself so I can help you try it on.
+</example_3>
 """
 
     def __init__(
