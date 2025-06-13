@@ -208,6 +208,16 @@ class AgoraMCPClient(MCPClient):
         self._http_session: aiohttp.ClientSession | None = None
         super().__init__(unique_name, image_uploader)
 
+    @property
+    def tools(self) -> list[ChatCompletionToolParam]:
+        return [
+            tool
+            for tool in super().tools
+            # For new limit to search tools only during testing to reduce token usage
+            # and complexity for the LLM. Later on use more powerful LLMs that can handle more tools.
+            if "search" in tool["function"]["name"]
+        ]
+
     def post_tool_call(
         self,
         call_id: str,
@@ -233,9 +243,9 @@ class AgoraMCPClient(MCPClient):
         new_content: list[ChatCompletionContentPartParam] = []
         products: list[dict[str, Any]] = json_data["Products"]
 
-        if len(products) > 10:
-            print(f"Received {len(products)} products, limiting to 10 for context.")
-            products = products[:10]  # Limit to first 10 products
+        if len(products) > 5:
+            print(f"Received {len(products)} products, limiting to 5 for context.")
+            products = products[:5]  # Limit to first 5 products
 
         # Check if images exist for each product and prepare the content
         image_exists_tasks = self._event_loop.run_until_complete(

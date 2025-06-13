@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 class VibeShoppingAgent:
     SYSTEM_PROMPT: str = """You are a helpful online shopping AI assistant. 
 <context>    
-    Yor task is to help users find products, try them virtually and buy them. 
+    Your task is to help users find products, try them virtually and buy them. 
     You have access to many tools (functions) you can call to to perform different tasks. You are also capable of displaying products and images in the user interface using the Display tools, so the user can see them.
 </context>
 
@@ -58,7 +58,7 @@ class VibeShoppingAgent:
 </instructions-and-rules>
 
 <constraints>
-    The maximum number of products you can search at once is 10, don't exceed this limit.
+    The maximum number of products you can search at once is 5, don't exceed this limit.
     Text formatting is forbidden! So make sure to only output raw plain text. Do not output markdown or emoji.
 </constraints>
 
@@ -66,7 +66,7 @@ class VibeShoppingAgent:
     User: Can you find me a modern sofa?
     Assistant: Yes sure! Please wait while I search for a beautiful modern sofa for you.
     <tool_call>
-    {"name": "Agora.search_products", "arguments": {"q": "modern sofa", "count": 10}}
+    {"name": "Agora.search_products", "arguments": {"q": "modern sofa", "count": 5}}
     </tool_call>
     Tool:
     <tool_response>
@@ -91,7 +91,7 @@ class VibeShoppingAgent:
         image_uploader: ImageUploader = ImageUploader(),
     ):
         self.agora_client = AgoraMCPClient(unique_name="Agora")
-        self.fewsats_client = MCPClient(unique_name="Fewsats")
+        # self.fewsats_client = MCPClient(unique_name="Fewsats")
         self.virtual_try_client = MCPClient(unique_name="VirtualTry")
 
         self.openai_client = OpenAI(
@@ -108,7 +108,7 @@ class VibeShoppingAgent:
 
         self._mcp_clients: list[MCPClient] = [
             self.agora_client,
-            self.fewsats_client,
+            # self.fewsats_client,
             self.virtual_try_client,
         ]
         self.display_tool = _build_display_tool_definitions()
@@ -119,15 +119,16 @@ class VibeShoppingAgent:
         self, fewsats_api_key: str = os.getenv("FEWSATS_API_KEY", "FAKE_API_KEY")
     ):
         self.agora_client.connect_to_server("uvx", ["agora-mcp"])
-        self.fewsats_client.connect_to_server(
-            "env", [f"FEWSATS_API_KEY={fewsats_api_key}", "uvx", "fewsats-mcp"]
-        )
+        # Excluding Payments with FEWSATS for now
+        # self.fewsats_client.connect_to_server(
+        #     "env", [f"FEWSATS_API_KEY={fewsats_api_key}", "uvx", "fewsats-mcp"]
+        # )
         self.virtual_try_client.connect_to_server("python", ["./mcp_server.py"])
 
         self.tools = (
             self.display_tool
             + self.agora_client.tools
-            + self.fewsats_client.tools
+            # + self.fewsats_client.tools
             + self.virtual_try_client.tools
         )
         self.clients_connected = True
@@ -252,6 +253,7 @@ class VibeShoppingAgent:
             stream=True,
             tools=self.tools,
             temperature=0.7,
+            top_p=0.7,
         )
         pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
 

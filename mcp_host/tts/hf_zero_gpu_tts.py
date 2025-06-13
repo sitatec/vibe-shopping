@@ -58,6 +58,7 @@ def stream_text_to_speech(
     standard_lang_code = KOKORO_TO_STD_LANG[kokoro_lang]
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
+        text = text.strip()
         print(f"Streaming audio for text: {text}")
         for audio in text_to_speech(text, pipe_key=kokoro_lang, voice=voice):
             yield 24000, audio
