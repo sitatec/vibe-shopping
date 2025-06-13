@@ -290,8 +290,7 @@ class VibeShoppingAgent:
             messages=chat_history,
             stream=True,
             tools=self.tools,
-            temperature=0.7,
-            top_p=0.7,
+            temperature=0.15,
         )
         pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
 

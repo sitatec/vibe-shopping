@@ -203,7 +203,7 @@ with gr.Blocks(
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
-        lambda *args: args,
+        lambda *args: args[-4:],  # Get the last 4 outputs
         outputs=[chat_history, displayed_products, displayed_image, input_image],
         queue=False,
         show_progress="hidden",
