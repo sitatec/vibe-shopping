@@ -78,6 +78,8 @@ def handle_audio_stream(
     displayed_image: str | None = None,
     image_with_mask: dict | None = None,
     gradio_client: Client | None = None,
+    temperature: float | None = None,
+    top_p: float | None = None,
 ):
     try:
         image, mask = handle_image_upload(image_with_mask)
@@ -99,6 +101,8 @@ def handle_audio_stream(
             input_image=image,
             input_mask=mask,
             gradio_client=gradio_client,
+            temperature=temperature,
+            top_p=top_p,
         ):
             # Yield the audio chunk to the WebRTC stream
             yield ai_speech
@@ -189,6 +193,27 @@ with gr.Blocks(
             )
             input_image = gr.ImageMask(value=None, type="pil")
 
+        with gr.Accordion(open=False, label="LLM Parameters"):
+            gr.Markdown(
+                "You can change the LLM parameters to control the behavior of the AI assistant. "
+                "For example, you can make it more creative or more focused on specific tasks."
+            )
+            with gr.Row():
+                temperature = gr.Slider(
+                    label="Temperature",
+                    minimum=0.0,
+                    maximum=2.0,
+                    value=0.7,
+                    step=0.1,
+                )
+                top_p = gr.Slider(
+                    label="Top P",
+                    minimum=0.0,
+                    maximum=1.0,
+                    value=0.9,
+                    step=0.1,
+                )
+
     audio_stream.stream(
         ReplyOnPause(handle_audio_stream),
         inputs=[
@@ -199,11 +224,13 @@ with gr.Blocks(
             displayed_image,
             input_image,
             gradio_client,
+            temperature,
+            top_p,
         ],
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
-        lambda *args: args[-4:],  # Get the last 4 outputs
+        lambda *args: (args[-4], args[-3], args[-2], args[-1]),  # Last four outputs
         outputs=[chat_history, displayed_products, displayed_image, input_image],
         queue=False,
         show_progress="hidden",

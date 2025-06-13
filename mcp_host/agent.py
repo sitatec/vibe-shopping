@@ -192,6 +192,8 @@ class VibeShoppingAgent:
         input_image: Image.Image | None = None,
         input_mask: Image.Image | None = None,
         gradio_client: Client | None = None,
+        temperature: float | None = None,
+        top_p: float | None = None,
     ) -> Generator[tuple[int, np.ndarray], None, None]:
         if voice == "debug_echo_user_speech":
             time.sleep(1)  # Simulate some processing delay
@@ -248,6 +250,8 @@ class VibeShoppingAgent:
                 text_chunks=text_chunks,
                 update_ui=update_ui,
                 gradio_client=gradio_client,
+                temperature=temperature,
+                top_p=top_p,
             ):
                 yield ai_speech
                 print(
@@ -284,13 +288,16 @@ class VibeShoppingAgent:
             [list[dict[str, str]] | None, str | None, bool | None], None
         ],
         gradio_client: Client | None = None,
+        temperature: float | None = None,
+        top_p: float | None = None,
     ) -> Generator[tuple[int, np.ndarray], None, None]:
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
             stream=True,
             tools=self.tools,
-            temperature=0.15,
+            temperature=temperature,
+            top_p=top_p,
         )
         pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
 
