@@ -207,7 +207,8 @@ class VibeShoppingAgent:
         # we will rely on gradio's session state to keep the chat history per user session.
         chat_history = (
             # If no history is provided, start with the system prompt
-            chat_history or [{"role": "system", "content": system_prompt or self.SYSTEM_PROMPT}]
+            chat_history
+            or [{"role": "system", "content": system_prompt or self.SYSTEM_PROMPT}]
         )
 
         user_message_contents: list[ChatCompletionContentPartParam] = []
@@ -303,9 +304,18 @@ class VibeShoppingAgent:
         )
         pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
 
+        response_log = ""
+
         def text_stream() -> Generator[str, None, None]:
+            nonlocal response_log
             for chunk in llm_stream:
                 delta = chunk.choices[0].delta
+
+                response_log += delta.content or ""
+                response_log += "".join(
+                    tool_call.model_dump_json(indent=2)
+                    for tool_call in delta.tool_calls or []
+                )
 
                 if delta.content:
                     text_chunks.append(delta.content)
@@ -337,8 +347,7 @@ class VibeShoppingAgent:
             for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
                 yield ai_speech
 
-        print("LLM stream completed.")
-        print(f"Pending tool calls: {pending_tool_calls}")
+        print("LLM stream completed. \nResponse log:\n", response_log)
         for tool_call in pending_tool_calls.values():
             print(f"Processing tool call: {tool_call}")
             assert tool_call.function is not None, "Tool call function must not be None"
