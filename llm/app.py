@@ -38,17 +38,16 @@ app = modal.App("vibe-shopping-llm")
 def serve_llm():
     import subprocess
     import os
-    import requests
     import torch
 
-    chat_template_path = "/root/chat_template.jinja"
-    if not os.path.exists(chat_template_path):
-        print("Downloading chat template...")
-        url = "https://raw.githubusercontent.com/edwardzjl/chat-templates/refs/heads/main/qwen2_5/chat_template.jinja"
-        response = requests.get(url)
-        response.raise_for_status()
-        with open(chat_template_path, "w") as f:
-            f.write(response.text)
+    # chat_template_path = "/root/chat_template.jinja"
+    # if not os.path.exists(chat_template_path):
+    #     print("Downloading chat template...")
+    #     url = "https://raw.githubusercontent.com/edwardzjl/chat-templates/refs/heads/main/qwen2_5/chat_template.jinja"
+    #     response = requests.get(url)
+    #     response.raise_for_status()
+    #     with open(chat_template_path, "w") as f:
+    #         f.write(response.text)
 
     min_pixels = 128 * 28 * 28  # min 128 tokens
     max_pixels = 340 * 28 * 28  # max 340 tokens (~512x512 image)
@@ -77,8 +76,6 @@ def serve_llm():
         "--api-key",
         os.environ["API_KEY"],
         "--enforce-eager",
-        "--chat-template",
-        chat_template_path,
         # Minimize token usage
         "--mm-processor-kwargs",
         f'{{"min_pixels": {min_pixels}, "max_pixels": {max_pixels}}}',
