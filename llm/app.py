@@ -67,7 +67,7 @@ def serve_llm():
         "hermes",
         "--enable-auto-tool-choice",
         "--limit-mm-per-prompt",
-        "image=10",
+        "image=5",
         "--tensor-parallel-size",
         str(N_GPU),
         "--host",
@@ -83,10 +83,10 @@ def serve_llm():
         "--mm-processor-kwargs",
         f'{{"min_pixels": {min_pixels}, "max_pixels": {max_pixels}}}',
         # Extend context length to 65536 tokens
-        "--rope-scaling",
-        '{"rope_type":"yarn","factor":2.0,"original_max_position_embeddings":32768}',
-        "--max-model-len",
-        "65536",
+        # "--rope-scaling",
+        # '{"rope_type":"yarn","factor":2.0,"original_max_position_embeddings":32768}',
+        # "--max-model-len",
+        # "65536",
     ]
 
     subprocess.Popen(cmd)
