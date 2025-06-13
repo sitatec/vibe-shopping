@@ -1,5 +1,5 @@
 import os
-from typing import AsyncGenerator, Iterator
+from typing import Generator, Iterator
 
 import numpy as np
 from fastrtc import KokoroTTSOptions, get_tts_model
@@ -14,9 +14,9 @@ if not os.getenv("LOCALE_RUN"):
     model = get_tts_model(model="kokoro")
 
 
-async def stream_text_to_speech(
+def stream_text_to_speech(
     text_stream: Iterator[str], voice: str | None = None
-) -> AsyncGenerator[tuple[int, np.ndarray], None]:
+) -> Generator[tuple[int, np.ndarray], None, None]:
     """
     Convert text to speech using the specified voice.
 
@@ -37,5 +37,5 @@ async def stream_text_to_speech(
     options = KokoroTTSOptions(voice=voice, lang=standard_lang_code)
 
     for text in generate_sentences(text_stream, language=standard_lang_code):
-        async for audio in model.stream_tts(text, options):
+        for audio in model.stream_tts_sync(text, options):
             yield audio

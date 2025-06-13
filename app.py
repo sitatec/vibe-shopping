@@ -24,7 +24,7 @@ if IS_LOCAL:
 
 import gradio as gr
 from gradio_modal import Modal
-import aiohttp
+import requests
 from gradio_client import Client
 import numpy as np
 from PIL import Image
@@ -70,7 +70,7 @@ def handle_image_upload(
     return image, mask
 
 
-async def handle_audio_stream(
+def handle_audio_stream(
     audio: tuple[int, np.ndarray],
     chat_history: list[ChatCompletionMessageParam],
     voice: str | None = None,
@@ -91,7 +91,7 @@ async def handle_audio_stream(
                 displayed_products = products
                 displayed_image = image
 
-        async for ai_speech in vibe_shopping_agent.chat(
+        for ai_speech in vibe_shopping_agent.chat(
             user_speech=audio,
             chat_history=chat_history,
             voice=voice,
@@ -111,18 +111,17 @@ async def handle_audio_stream(
         raise gr.Error(f"An error occurred: {e}")
 
 
-async def set_client_for_session(request: gr.Request):
-    async with aiohttp.ClientSession() as session:
-        health_check_response = await session.get(
-            os.environ["OPENAI_API_BASE_URL"].replace("/v1", "/health")
-        )
-    if health_check_response.status != 200:
+def set_client_for_session(request: gr.Request):
+    health_check_response = requests.get(
+        os.environ["OPENAI_API_BASE_URL"].replace("/v1", "/health")
+    )
+    if health_check_response.status_code != 200:
         raise gr.Error(
-            f"Inference server is not available. Status code: {health_check_response.status}"
+            f"Inference server is not available. Status code: {health_check_response.status_code}"
         )
 
     if not vibe_shopping_agent.clients_connected:
-        await vibe_shopping_agent.connect_clients()
+        vibe_shopping_agent.connect_clients()
 
     if IS_HF_ZERO_GPU:
         # No need to set client for HF Zero GPU, we will run tts & stt inference on the gpu
@@ -170,11 +169,9 @@ with gr.Blocks(
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
-            rtc_configuration=(
-                get_twilio_turn_credentials() if not IS_LOCAL else None
-            ),
+            rtc_configuration=(get_twilio_turn_credentials() if not IS_LOCAL else None),
             # rtc_configuration=(
-            #     get_cloudflare_turn_credentials_async if not IS_LOCAL else None
+            #     get_cloudflare_turn_credentials_if not IS_LOCAL else None
             # ),
             # server_rtc_configuration=(
             #     get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
@@ -216,4 +213,4 @@ with gr.Blocks(
         ColdBootUI()
 
     vibe_shopping_app.load(set_client_for_session, None, [gradio_client, modal])
-    vibe_shopping_app.launch()
+    vibe_shopping_app.queue().launch()

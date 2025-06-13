@@ -23,6 +23,9 @@ if TYPE_CHECKING:
 from utils import ImageUploader
 
 
+__all__ = ["MCPClient", "AgoraMCPClient"]
+
+
 class MCPClient:
     def __init__(
         self, unique_name: str, image_uploader: ImageUploader = ImageUploader()
@@ -42,6 +45,7 @@ class MCPClient:
         self.exit_stack = AsyncExitStack()
         self.name = unique_name
         self.image_uploader = image_uploader
+        self._event_loop = get_or_create_event_loop()
 
     def ensure_initialized(self):
         if not self.session:
@@ -50,9 +54,11 @@ class MCPClient:
             )
 
     @property
-    async def tools(self) -> list[ChatCompletionToolParam]:
+    def tools(self) -> list[ChatCompletionToolParam]:
         self.ensure_initialized()
-        response = await self.session.list_tools()  # type: ignore
+        response = self._event_loop.run_until_complete(
+            self.session.list_tools(),  # type: ignore
+        )
 
         return [
             {
@@ -78,7 +84,7 @@ class MCPClient:
         self.ensure_initialized()
         return tool_name.startswith(f"{self.name}.")
 
-    async def connect_to_server(
+    def connect_to_server(
         self,
         server_command: str,
         args: list[str] = [],
@@ -90,41 +96,43 @@ class MCPClient:
             env=env,
         )
 
-        stdio_transport = await self.exit_stack.enter_async_context(
-            stdio_client(server_params)
+        stdio_transport = self._event_loop.run_until_complete(
+            self.exit_stack.enter_async_context(stdio_client(server_params))
         )
         self.stdio, self.write = stdio_transport
-        self.session = await self.exit_stack.enter_async_context(
-            ClientSession(self.stdio, self.write)
+        self.session = self._event_loop.run_until_complete(
+            self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
         )
 
-        await self.session.initialize()
+        self._event_loop.run_until_complete(self.session.initialize())
 
         print(
             f"\nSuccessfully Connected to {self.name} MCPClient! \nAvailable tools:",
-            [tool["function"]["name"] for tool in await self.tools],  # type: ignore
+            [tool["function"]["name"] for tool in self.tools],
             "\n",
         )
 
-    async def pre_tool_call(
+    def pre_tool_call(
         self, call_id: str, tool_name: str, tool_args: dict[str, Any] | None = None
     ) -> tuple[str, dict[str, Any] | None]:
         return tool_name, tool_args
 
-    async def call_tool(
+    def call_tool(
         self, call_id: str, tool_name: str, tool_args: dict[str, Any] | None = None
     ) -> ChatCompletionToolMessageParam:
         self.ensure_initialized()
         tool_name = tool_name.split(".", 1)[-1]  # Remove the namespace prefix if exists
 
-        tool_name, tool_args = await self.pre_tool_call(call_id, tool_name, tool_args)
+        tool_name, tool_args = self.pre_tool_call(call_id, tool_name, tool_args)
         print(
             f"Send tool call to mcp server: {tool_name} with args: {tool_args} (call_id: {call_id})"
         )
-        response = await self.session.call_tool(  # type: ignore
-            tool_name, tool_args, read_timeout_seconds=timedelta(seconds=20)
+        response = self._event_loop.run_until_complete(
+            self.session.call_tool(  # type: ignore
+                tool_name, tool_args, read_timeout_seconds=timedelta(seconds=20)
+            )
         )
-        content = await self.post_tool_call(call_id, tool_name, response, tool_args)
+        content = self.post_tool_call(call_id, tool_name, response, tool_args)
         print(
             f"Received response from mcp server: {tool_name} with args: {tool_args} (call_id: {call_id}) "
         )
@@ -134,7 +142,7 @@ class MCPClient:
             "content": content,  # type: ignore
         }
 
-    async def post_tool_call(
+    def post_tool_call(
         self,
         call_id: str,
         tool_name: str,
@@ -177,9 +185,9 @@ class MCPClient:
 
         return contents
 
-    async def close(self):
+    def close(self):
         if self.session:
-            await self.exit_stack.aclose()
+            self._event_loop.run_until_complete(self.exit_stack.aclose())
 
 
 class AgoraMCPClient(MCPClient):
@@ -200,7 +208,7 @@ class AgoraMCPClient(MCPClient):
         self._http_session: aiohttp.ClientSession | None = None
         super().__init__(unique_name, image_uploader)
 
-    async def post_tool_call(
+    def post_tool_call(
         self,
         call_id: str,
         tool_name: str,
@@ -210,7 +218,7 @@ class AgoraMCPClient(MCPClient):
         contents = cast(list[TextContent], response.content)
         status_code = contents[0].text
         if status_code != "200":
-            return await super().post_tool_call(call_id, tool_name, response, tool_args)
+            return super().post_tool_call(call_id, tool_name, response, tool_args)
 
         content = contents[1]  # The second content part should be the JSON response
         json_data = json.loads(content.text)
@@ -220,7 +228,7 @@ class AgoraMCPClient(MCPClient):
             # Not robust though, since response schema can be changed by the server.
             # We could also rely on tool_name to check if it is list/search but the tool name can also change.
             # We need to rely on mcp server versioning.
-            return await super().post_tool_call(call_id, tool_name, response, tool_args)
+            return super().post_tool_call(call_id, tool_name, response, tool_args)
 
         new_content: list[ChatCompletionContentPartParam] = []
         products: list[dict[str, Any]] = json_data["Products"]
@@ -230,8 +238,10 @@ class AgoraMCPClient(MCPClient):
             products = products[:10]  # Limit to first 10 products
 
         # Check if images exist for each product and prepare the content
-        image_exists_tasks = await asyncio.gather(
-            *[self._check_product_image_exists(product) for product in products]
+        image_exists_tasks = self._event_loop.run_until_complete(
+            asyncio.gather(
+                *[self._check_product_image_exists(product) for product in products]
+            )
         )
 
         for product, image_exists in zip(products, image_exists_tasks):
@@ -294,8 +304,22 @@ class AgoraMCPClient(MCPClient):
                 print(f"Error checking image URL: {e}")
                 return False
         return False
-    
-    async def close(self):
+
+    def close(self):
         if self._http_session:
-            await self._http_session.close()
-        await super().close()
+            self._event_loop.run_until_complete(self._http_session.close())
+        super().close()
+
+
+def get_or_create_event_loop() -> asyncio.AbstractEventLoop:
+    """
+    Get or create an event loop for the current thread (will be shared by all MCP clients in the same thread).
+    """
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError as e:
+        if "event loop" in str(e).lower():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
+        raise e

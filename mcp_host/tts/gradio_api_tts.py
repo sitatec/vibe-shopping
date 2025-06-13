@@ -1,6 +1,6 @@
 import io
 import time
-from typing import AsyncGenerator, Iterator
+from typing import Generator, Iterator
 import base64
 import wave
 
@@ -14,11 +14,11 @@ from mcp_host.tts.utils import KOKORO_TO_STD_LANG, VOICES
 __all__ = ["stream_text_to_speech"]
 
 
-async def stream_text_to_speech(
+def stream_text_to_speech(
     text_stream: Iterator[str],
     client: Client,
     voice: str | None = None,
-) -> AsyncGenerator[tuple[int, np.ndarray], None]:
+) -> Generator[tuple[int, np.ndarray], None, None]:
     """
     Convert text to speech using the specified voice.
 

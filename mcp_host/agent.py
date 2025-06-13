@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import time
-from typing import TYPE_CHECKING, AsyncGenerator, Callable, Generator
+from typing import TYPE_CHECKING, Callable, Generator
 
 from gradio_client import Client
 import numpy as np
@@ -116,20 +115,20 @@ class VibeShoppingAgent:
         self.image_uploader = image_uploader
         self.clients_connected = False
 
-    async def connect_clients(
+    def connect_clients(
         self, fewsats_api_key: str = os.getenv("FEWSATS_API_KEY", "FAKE_API_KEY")
     ):
-        await self.agora_client.connect_to_server("uvx", ["agora-mcp"])
-        await self.fewsats_client.connect_to_server(
+        self.agora_client.connect_to_server("uvx", ["agora-mcp"])
+        self.fewsats_client.connect_to_server(
             "env", [f"FEWSATS_API_KEY={fewsats_api_key}", "uvx", "fewsats-mcp"]
         )
-        await self.virtual_try_client.connect_to_server("python", ["./mcp_server.py"])
+        self.virtual_try_client.connect_to_server("python", ["./mcp_server.py"])
 
         self.tools = (
             self.display_tool
-            + await self.agora_client.tools
-            + await self.fewsats_client.tools
-            + await self.virtual_try_client.tools
+            + self.agora_client.tools
+            + self.fewsats_client.tools
+            + self.virtual_try_client.tools
         )
         self.clients_connected = True
 
@@ -142,7 +141,7 @@ class VibeShoppingAgent:
         except StopIteration:
             return None
 
-    async def chat(
+    def chat(
         self,
         user_speech: tuple[int, np.ndarray],
         chat_history: list[ChatCompletionMessageParam],
@@ -154,9 +153,9 @@ class VibeShoppingAgent:
         input_image: Image.Image | None = None,
         input_mask: Image.Image | None = None,
         gradio_client: Client | None = None,
-    ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
+    ) -> Generator[tuple[int, np.ndarray], None, None]:
         if voice == "debug_echo_user_speech":
-            await asyncio.sleep(1)  # Simulate some processing delay
+            time.sleep(1)  # Simulate some processing delay
             print(f"Debug echo user speech: {user_speech}")
             yield user_speech
             return
@@ -202,7 +201,7 @@ class VibeShoppingAgent:
             tool_responses: list[ChatCompletionToolMessageParam] = []
             text_chunks: list[str] = []
 
-            async for ai_speech in self._send_to_llm(
+            for ai_speech in self._send_to_llm(
                 chat_history=chat_history,
                 voice=voice,
                 tool_calls=tool_calls,
@@ -235,7 +234,7 @@ class VibeShoppingAgent:
         print(f"Agent loop completed in {time.time() - t1:.2f} seconds")
         print(f"Time taken for the entire chat: {time.time() - t:.2f} seconds")
 
-    async def _send_to_llm(
+    def _send_to_llm(
         self,
         chat_history: list[ChatCompletionMessageParam],
         voice: str | None,
@@ -246,7 +245,7 @@ class VibeShoppingAgent:
             [list[dict[str, str]] | None, str | None, bool | None], None
         ],
         gradio_client: Client | None = None,
-    ) -> AsyncGenerator[tuple[int, np.ndarray], None]:
+    ) -> Generator[tuple[int, np.ndarray], None, None]:
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
@@ -282,12 +281,12 @@ class VibeShoppingAgent:
 
         if gradio_client is not None:
             print("Using online Gradio client for text-to-speech.")
-            async for audio_chunk in gradio_api_stream_text_to_speech(
+            for audio_chunk in gradio_api_stream_text_to_speech(
                 text_stream(), client=gradio_client, voice=voice
             ):
                 yield audio_chunk
         else:
-            async for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
+            for ai_speech in stream_text_to_speech(text_stream(), voice=voice):
                 yield ai_speech
 
         print("LLM stream completed.")
@@ -341,7 +340,7 @@ class VibeShoppingAgent:
                             }
                         )
                     else:
-                        tool_response = await mcp_client.call_tool(
+                        tool_response = mcp_client.call_tool(
                             call_id=call_id,
                             tool_name=tool_name,
                             tool_args=json.loads(tool_args) if tool_args else None,
