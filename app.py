@@ -35,6 +35,7 @@ from fastrtc import (
     get_cloudflare_turn_credentials_async,
     get_cloudflare_turn_credentials,
     get_twilio_turn_credentials,
+    WebRTCError
 )
 
 from mcp_host.agent import VibeShoppingAgent
@@ -115,7 +116,7 @@ def handle_audio_stream(
         )  # None for resetting the input_image state
     except Exception as e:
         print(f"Error in handle_audio_stream: {e}")
-        raise gr.Error(f"An error occurred: {e}")
+        raise WebRTCError(f"An error occurred: {e}")
 
 
 def set_client_for_session(request: gr.Request):
@@ -123,7 +124,7 @@ def set_client_for_session(request: gr.Request):
         os.environ["OPENAI_API_BASE_URL"].replace("/v1", "/health")
     )
     if health_check_response.status_code != 200:
-        raise gr.Error(
+        raise WebRTCError(
             f"Inference server is not available. Status code: {health_check_response.status_code}"
         )
 
