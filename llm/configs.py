@@ -21,7 +21,7 @@ vllm_image = (
 )
 
 MODEL_NAME = "RedHatAI/Qwen2.5-VL-72B-Instruct-quantized.w4a16"
-MODEL_REVISION = "589ba0a2f008b405fad049290c6c301a8f4f12e9"
+MODEL_REVISION = "fa775a982552b2e44f2a12b6cdc793348cd4f1c4"
 
 hf_cache_vol = modal.Volume.from_name(
     "huggingface-cache", create_if_missing=True, environment_name="vibe-shopping"
