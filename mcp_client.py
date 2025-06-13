@@ -239,9 +239,7 @@ class AgoraMCPClient(MCPClient):
 
         # Check if images exist for each product and prepare the content
         image_exists_tasks = self._event_loop.run_until_complete(
-            asyncio.gather(
-                *[self._check_product_image_exists(product) for product in products]
-            )
+            self._check_product_images(products)
         )
 
         for product, image_exists in zip(products, image_exists_tasks):
@@ -278,6 +276,18 @@ class AgoraMCPClient(MCPClient):
                 )
 
         return new_content
+
+    async def _check_product_images(self, products: list[dict[str, Any]]) -> list[bool]:
+        """
+        Check if the products have images available.
+        Args:
+            products: A list of product dictionaries to check.
+
+        Returns:
+            list[bool]: A list of booleans indicating whether each product has an image.
+        """
+        tasks = [self._check_product_image_exists(product) for product in products]
+        return await asyncio.gather(*tasks)
 
     async def _check_product_image_exists(self, product: dict[str, Any]) -> bool:
         """
