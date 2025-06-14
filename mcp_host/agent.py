@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import TYPE_CHECKING, Callable, Generator
 
@@ -34,7 +35,10 @@ if TYPE_CHECKING:
         ChatCompletionContentPartTextParam,
         ChatCompletionContentPartImageParam,
     )
-    from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
+    from openai.types.chat.chat_completion_chunk import (
+        ChoiceDeltaToolCall,
+        ChoiceDeltaToolCallFunction,
+    )
 
 
 class VibeShoppingAgent:
@@ -53,8 +57,8 @@ class VibeShoppingAgent:
     If a function requires an input that you don't have based on your knowledge and the conversation history, you should ask the user for it. For example, if the user asks to try on a product, but you don't have the target image, you should ask the user to provide it.
 
     When calling a function, let the user know what you are doing while they are waiting. 
-    Something like: One moment, I will search for products matching your request \n<tool_call>\n<call-function-to-search-products>\n</tool_call>.
-    Then when you get the response from the function, you can say Here are some products I found for you \n<tool_call>\n<call-function-to-display-products>\n</tool_call>.
+    Something like: One moment, I will search for products matching your request \n<tool-call>\n<call-function-to-search-products>\n</tool-call>\n
+    Then when you get the response from the function, you can say Here are some products I found for you \n<tool-call>\n<call-function-to-display-products>\n</tool-call>\n
 </instructions-and-rules>
 
 <constraints>
@@ -64,64 +68,62 @@ class VibeShoppingAgent:
 </constraints>
 
 <example-1>
-User: Can you find me a modern sofa?
-Assistant: Yes sure! Please wait while I search for a beautiful modern sofa for you.
-<tool_call>
-{"name": "Agora.search_products", "arguments": {"q": "modern sofa", "count": 5}}
-</tool_call>
-Tool:
-<tool_response>
-product_details: {"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
-products_details: ["_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"]\nproduct_image: <image-content>
-...
-products_details: ["_id": "id5", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"]\nproduct_image: <image-content>
-</tool_response>
-Assistant: I've found some great options you might like! Here they are
-<tool_call>
-{"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://example.com/image.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://example.com/sofa.png", "price": "$299.99"}, ...{ "name": "Luxury Sofa", "image_url": "https://example.com/luxury-sofa.png", "price": "$999.99"}]}}
-</tool_call>
-Personally, I think the Stylish Green Sofa looks really nice and fits the modern style you asked for. What do you think? Would you like to see more details or try it virtually?
+    User: Can you find me a modern sofa?
+    Assistant: Yes sure! Please wait while I search for a beautiful modern sofa for you.
+    <tool-call>
+    {"name": "Agora.search_products", "arguments": {"q": "modern sofa", "count": 5}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    product_details: {"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
+    products_details: {"_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"}\nproduct_image: <image-content>
+    ...
+    products_details: {"_id": "id5", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    </tool-response>
+    Assistant: I've found some great options you might like! Here they are
+    <tool-call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://example.com/image.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://example.com/sofa.png", "price": "$299.99"}, ... { "name": "Luxury Sofa", "image_url": "https://example.com/luxury-sofa.png", "price": "$999.99"}]}}
+    </tool-call>
+    Personally, I think the Stylish Green Sofa looks really nice and fits the modern style you asked for. What do you think? Would you like to see more details or try it virtually?
 </example-1>
-
 <example-2>
-User: I would like to buy a new laptop for my son's birthday, he loves gaming, can you help me find one?
-Assistant: Oh wow, happy birthday to your son! I can definitely help you find a great laptop that he will like. Give me a moment to search for some gaming laptops.
-<tool_call>
-{"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 5}}
-</tool_call>
-Tool:
-<tool_response>
-product_details: {"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
-...
-products_details: ["_id": "id5", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"]\nproduct_image: <image-content>
-</tool_response>
-Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
-<tool_call>
-{"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
-</tool_call>
-I think the High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
+    User: I would like to buy a new laptop for my son's birthday, he loves gaming, can you help me find one?
+    Assistant: Oh wow, happy birthday to your son! I can definitely help you find a great laptop that he will like. Give me a moment to search for some gaming laptops.
+    <tool-call>
+    {"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 5}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    product_details: {"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    ...
+    products_details: {"_id": "id5", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}\nproduct_image: <image-content>
+    </tool-response>
+    Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
+    <tool-call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
+    </tool-call>
+    I think the High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
 </example-2>
-
-<example_3>
-User: I would like to buy a dress for a professional dinner
-Assistant: Sure! I can help you find a nice dress for that occasion. One second please.
-<tool_call>
-{"name": "Agora.search_products", "arguments": {"q": "Event Dresses", "count": 5}}
-</tool_call>
-Tool:
-<tool_response>
-product_details: {"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
-...
-products_details: ["_id": "id5", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"]\nproduct_image: <image-content>
-</tool_response>
-Assistant: Here are some beautiful dresses I found for you:
-<tool_call>
-{"name": "Display.display_products", "arguments": {"products": [{ "name": "Elegant Black Dress", "image_url": "https://example.com/elegant-black-dress.png", "price": "$199.99"}, ... { "name": "Stylish Red Dress", "image_url": "https://example.com/stylish-red-dress.png", "price": "$249.99"}]}}
-</tool_call>
-If you like standing out, I think the Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
-User: Yes, I would like to try it on
-Assistant: Great! Please upload a photo of yourself so I can help you try it on.
-</example_3>
+<example-3>
+    User: I would like to buy a dress for a professional dinner
+    Assistant: Sure! I can help you find a nice dress for that occasion. One second please.
+    <tool-call>
+    {"name": "Agora.search_products", "arguments": {"q": "Event Dresses", "count": 5}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    product_details: {"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
+    ...
+    products_details: {"_id": "id5", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}\nproduct_image: <image-content>
+    </tool-response>
+    Assistant: Here are some beautiful dresses I found for you:
+    <tool-call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Elegant Black Dress", "image_url": "https://example.com/elegant-black-dress.png", "price": "$199.99"}, ... { "name": "Stylish Red Dress", "image_url": "https://example.com/stylish-red-dress.png", "price": "$249.99"}]}}
+    </tool-call>
+    If you like standing out, I think the Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
+    User: Yes, I would like to try it on
+    Assistant: Great! Please upload a photo of yourself so I can help you try it on.
+</example-3>
 """
 
     def __init__(
@@ -155,6 +157,10 @@ Assistant: Great! Please upload a photo of yourself so I can help you try it on.
         self.display_tool = _build_display_tool_definitions()
         self.image_uploader = image_uploader
         self.clients_connected = False
+
+        # For custom tool call parsing, read the comment where we handle model output
+        # in the _send_to_llm method for details on why we need this.
+        self.tool_call_pattern = re.compile(r"<tool-call>(.*?)</tool-call>", re.DOTALL)
 
     def connect_clients(
         self, fewsats_api_key: str = os.getenv("FEWSATS_API_KEY", "FAKE_API_KEY")
@@ -304,12 +310,15 @@ Assistant: Great! Please upload a photo of yourself so I can help you try it on.
             temperature=temperature,
             top_p=top_p,
         )
-        pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
 
+        pending_tool_calls: dict[int, ChoiceDeltaToolCall] = {}
+        pending_custom_tool_calls: list[ChoiceDeltaToolCall] = []
         response_log = ""
+        custom_tool_parser_buffer = ""
 
         def text_stream() -> Generator[str, None, None]:
-            nonlocal response_log
+            nonlocal response_log, custom_tool_parser_buffer
+
             for chunk in llm_stream:
                 delta = chunk.choices[0].delta
 
@@ -320,6 +329,66 @@ Assistant: Great! Please upload a photo of yourself so I can help you try it on.
                 )
 
                 if delta.content:
+                    # For some reason, the display tools are either not being called, or the output is malformed,
+                    # but when I prompt the Qwen to output tool calls in a specific format different from the default,
+                    # it works. Maybe related to hermses tool call parser used in vLLM, but I think it is qween that wasn't
+                    # trained on tool use with complex arguments (arrays of objects, etc.) or maybe it was mainly trained on search-like tool calling, so it doesn't generalize well.
+
+                    # Manually parse tool calls with the following format: <tool-call>...</tool-call> as a fallback
+                    if custom_tool_parser_buffer:
+                        custom_tool_parser_buffer += delta.content
+                        if not custom_tool_parser_buffer.startswith("<tool"):
+                            # We received a chunk that ends with "<" earlier, since it wasn't possible to know
+                            # at that point if it was a tool call or not, we buffered it. Now we know it was not a tool call.
+                            yield custom_tool_parser_buffer
+                            custom_tool_parser_buffer = ""
+                            continue
+                        print("Custom tool parser buffer:", custom_tool_parser_buffer)
+                        if "</tool-call>" in custom_tool_parser_buffer:
+                            # Complete tool call found, parse it
+                            matches = self.tool_call_pattern.findall(
+                                custom_tool_parser_buffer
+                            )
+                            for match in matches:
+                                try:
+                                    pending_custom_tool_calls.append(
+                                        ChoiceDeltaToolCall(
+                                            index=len(pending_custom_tool_calls),
+                                            function=ChoiceDeltaToolCallFunction.model_validate_json(
+                                                match.strip()
+                                            ),
+                                        )
+                                    )
+                                except json.JSONDecodeError as e:
+                                    print(f"Error parsing tool call: {e}")
+                            # yield all text content outside of tool calls
+                            for text in self.tool_call_pattern.split(
+                                custom_tool_parser_buffer
+                            ):
+                                text = text.strip()
+                                if text:
+                                    text_chunks.append(text)
+                                    yield text
+                            # Clear the buffer after processing
+                            custom_tool_parser_buffer = ""
+                            continue
+                    else:
+                        # Check if the content contains a tool call
+                        if (
+                            "<" in delta.content
+                            and "<tool" in delta.content
+                            or delta.content.endswith("<")
+                        ):
+                            custom_tool_parser_buffer = delta.content
+                            # yield any text content before the tool call
+                            remaining_text = custom_tool_parser_buffer[
+                                : custom_tool_parser_buffer.index("<")
+                            ]
+                            if remaining_text:
+                                text_chunks.append(remaining_text)
+                                yield remaining_text
+                            continue
+
                     text_chunks.append(delta.content)
                     yield delta.content
 
@@ -350,7 +419,7 @@ Assistant: Great! Please upload a photo of yourself so I can help you try it on.
                 yield ai_speech
 
         print("LLM stream completed. \nResponse log:\n", response_log)
-        for tool_call in pending_tool_calls.values():
+        for tool_call in list(pending_tool_calls.values()) + pending_custom_tool_calls:
             print(f"Processing tool call: {tool_call}")
             assert tool_call.function is not None, "Tool call function must not be None"
 
@@ -468,6 +537,22 @@ def _build_display_tool_definitions() -> list[ChatCompletionToolParam]:
                     "properties": {
                         "products": {
                             "items": {
+                                "properties": {
+                                    "name": {
+                                        "title": "Product Name",
+                                        "type": "string",
+                                    },
+                                    "image_url": {
+                                        "title": "Product Image URL",
+                                        "type": "string",
+                                    },
+                                    "price": {
+                                        "title": "Product Price",
+                                        "type": "string",
+                                    },
+                                },
+                                "required": ["name", "image_url", "price"],
+                                "title": "Product",
                                 "type": "object",
                             },
                             "title": "Product List",
