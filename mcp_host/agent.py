@@ -10,6 +10,10 @@ from gradio_client import Client
 import numpy as np
 from PIL import Image
 from openai import OpenAI
+from openai.types.chat.chat_completion_chunk import (
+    ChoiceDeltaToolCall,
+    ChoiceDeltaToolCallFunction,
+)
 
 from mcp_client import MCPClient, AgoraMCPClient
 from mcp_host.tts.gradio_api_tts import (
@@ -34,10 +38,6 @@ if TYPE_CHECKING:
         ChatCompletionContentPartParam,
         ChatCompletionContentPartTextParam,
         ChatCompletionContentPartImageParam,
-    )
-    from openai.types.chat.chat_completion_chunk import (
-        ChoiceDeltaToolCall,
-        ChoiceDeltaToolCallFunction,
     )
 
 
@@ -334,7 +334,7 @@ class VibeShoppingAgent:
                     # it works. Maybe related to hermses tool call parser used in vLLM, but I think it is qween that wasn't
                     # trained on tool use with complex arguments (arrays of objects, etc.) or maybe it was mainly trained on search-like tool calling, so it doesn't generalize well.
 
-                    # Manually parse tool calls with the following format: <tool-call>...</tool-call> as a fallback
+                    # Manually parse tool calls with the following format: <tool-call>...</tool-call> as a fallback, not replacement incase the model use the default format for some cases.
                     if custom_tool_parser_buffer:
                         custom_tool_parser_buffer += delta.content
                         if not custom_tool_parser_buffer.startswith("<tool"):
