@@ -351,11 +351,15 @@ class VibeShoppingAgent:
                             )
                             for match in matches:
                                 try:
+                                    tool_call_data = json.loads(match)
                                     pending_custom_tool_calls.append(
                                         ChoiceDeltaToolCall(
                                             index=len(pending_custom_tool_calls),
-                                            function=ChoiceDeltaToolCallFunction.model_validate_json(
-                                                match.strip()
+                                            function=ChoiceDeltaToolCallFunction(
+                                                name=tool_call_data["name"],
+                                                arguments=json.dumps(
+                                                    tool_call_data.get("arguments", {})
+                                                ),
                                             ),
                                         )
                                     )
