@@ -68,7 +68,7 @@ class VibeShoppingAgent:
     Something like: One moment, I will search for products matching your request \n<tool-call>\n<call-function-to-search-products>\n</tool-call>\n
     Then when you get the response from the function, you can say Here are some products I found for you \n<tool-call>\n<call-function-to-display-products>\n</tool-call>\n
     
-    When you receive a response from a tool you can see the content and images, but the user can't at that point, until use display it, then the user will see it.
+    When you receive a response from a tool you can see the content and images, but the user can't at that point, until you display it then the user will see it.
     It's normal if you don't see the content displayed by the Display tool, since you have already seen them. The display tool is used to show the content to the user, not to you.
 </instructions-and-rules>
 

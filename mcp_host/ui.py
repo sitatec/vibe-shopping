@@ -66,7 +66,7 @@ def ProductList(products: list[dict[str, str]]):
     for product in products:
         name = product.get("name", "Unnamed Product")
         price = product.get("price", "N/A")
-        image = product.get("image", "")
+        image = product.get("image_url", "")
 
         cards += f"""
         <div style="
