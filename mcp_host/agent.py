@@ -4,7 +4,7 @@ import json
 import os
 import re
 import time
-from typing import TYPE_CHECKING, Callable, Generator
+from typing import TYPE_CHECKING, Generator
 
 from gradio_client import Client
 import numpy as np
@@ -40,6 +40,14 @@ if TYPE_CHECKING:
         ChatCompletionContentPartImageParam,
     )
 
+ChatOutputType = Generator[
+        # Sample rate, audio data
+        tuple[int, np.ndarray]
+        # Update the UI with a list of products or an image from url, or clear the UI
+        | tuple[list[dict[str, str]] | None, str | None, bool | None],
+        None,
+        None,
+    ]
 
 class VibeShoppingAgent:
     SYSTEM_PROMPT: str = """You are a helpful online shopping AI assistant. 
@@ -193,10 +201,6 @@ class VibeShoppingAgent:
         self,
         user_speech: tuple[int, np.ndarray],
         chat_history: list[ChatCompletionMessageParam],
-        # Update the UI with a list of products or an image from url, or clear the UI
-        update_ui: Callable[
-            [list[dict[str, str]] | None, str | None, bool | None], None
-        ],
         voice: str | None = None,
         input_image: Image.Image | None = None,
         input_mask: Image.Image | None = None,
@@ -204,7 +208,7 @@ class VibeShoppingAgent:
         temperature: float | None = None,
         top_p: float | None = None,
         system_prompt: str | None = None,
-    ) -> Generator[tuple[int, np.ndarray], None, None]:
+    ) -> ChatOutputType:
         if voice == "debug_echo_user_speech":
             time.sleep(1)  # Simulate some processing delay
             print(f"Debug echo user speech: {user_speech}")
@@ -253,18 +257,17 @@ class VibeShoppingAgent:
             tool_responses: list[ChatCompletionToolMessageParam] = []
             text_chunks: list[str] = []
 
-            for ai_speech in self._send_to_llm(
+            for ai_speech_or_ui_update in self._send_to_llm(
                 chat_history=chat_history,
                 voice=voice,
                 tool_calls=tool_calls,
                 tool_responses=tool_responses,
                 text_chunks=text_chunks,
-                update_ui=update_ui,
                 gradio_client=gradio_client,
                 temperature=temperature,
                 top_p=top_p,
             ):
-                yield ai_speech
+                yield ai_speech_or_ui_update
                 print(
                     f"AI speech received. Time taken since agent loop started: {time.time() - t1:.2f} seconds"
                 )
@@ -295,13 +298,10 @@ class VibeShoppingAgent:
         tool_calls: list[ChatCompletionMessageToolCallParam],
         tool_responses: list[ChatCompletionToolMessageParam],
         text_chunks: list[str],
-        update_ui: Callable[
-            [list[dict[str, str]] | None, str | None, bool | None], None
-        ],
         gradio_client: Client | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
-    ) -> Generator[tuple[int, np.ndarray], None, None]:
+    ) -> ChatOutputType:
         llm_stream = self.openai_client.chat.completions.create(
             model=self.model_name,
             messages=chat_history,
@@ -389,9 +389,7 @@ class VibeShoppingAgent:
                                 delta.content.index("<") :  # Start from the first "<"
                             ]
                             # yield any text content before the tool call
-                            remaining_text = delta.content[
-                                : delta.content.index("<")
-                            ]
+                            remaining_text = delta.content[: delta.content.index("<")]
                             if remaining_text:
                                 text_chunks.append(remaining_text)
                                 yield remaining_text
@@ -450,7 +448,7 @@ class VibeShoppingAgent:
                 print(f"Calling tool {tool_name} with args: {tool_args}")
                 if tool_name.startswith("Display."):
                     args = json.loads(tool_args) if tool_args else {}
-                    update_ui(
+                    yield (
                         args.get("products"),
                         args.get("image_url"),
                         tool_name == "Display.clear_display",

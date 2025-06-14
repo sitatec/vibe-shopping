@@ -35,7 +35,7 @@ from fastrtc import (
     get_cloudflare_turn_credentials_async,
     get_cloudflare_turn_credentials,
     get_twilio_turn_credentials,
-    WebRTCError
+    WebRTCError,
 )
 
 from mcp_host.agent import VibeShoppingAgent
@@ -86,22 +86,11 @@ def handle_audio_stream(
     try:
         image, mask = handle_image_upload(image_with_mask)
 
-        def update_ui(products, image, clear_ui):
-            print(f"Updating UI, products: {products}, image: {image}, clear_ui: {clear_ui}")
-            nonlocal displayed_products, displayed_image
-            if clear_ui:
-                displayed_products = None
-                displayed_image = None
-            else:
-                displayed_products = products
-                displayed_image = image
-
         chat_history = chat_history.copy()
-        for ai_speech in vibe_shopping_agent.chat(
+        for ai_speech_or_ui_update in vibe_shopping_agent.chat(
             user_speech=audio,
             chat_history=chat_history,
             voice=voice,
-            update_ui=update_ui,
             input_image=image,
             input_mask=mask,
             gradio_client=gradio_client,
@@ -109,8 +98,21 @@ def handle_audio_stream(
             top_p=top_p,
             system_prompt=system_prompt,
         ):
+            is_ui_update = len(ai_speech_or_ui_update) == 3
+            if is_ui_update:
+                displayed_products, displayed_image, clear_ui = ai_speech_or_ui_update
+
+                if clear_ui:
+                    displayed_products = None
+                    displayed_image = None
+
+                yield AdditionalOutputs(
+                    chat_history, displayed_products, displayed_image, None
+                ) # None for resetting the input_image state
+                continue
+
             # Yield the audio chunk to the WebRTC stream
-            yield ai_speech
+            yield ai_speech_or_ui_update
 
         yield AdditionalOutputs(
             chat_history, displayed_products, displayed_image, None
@@ -178,13 +180,13 @@ with gr.Blocks(
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
-            rtc_configuration=(get_twilio_turn_credentials() if not IS_LOCAL else None),
-            # rtc_configuration=(
-            #     get_cloudflare_turn_credentials_if not IS_LOCAL else None
-            # ),
-            # server_rtc_configuration=(
-            #     get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
-            # ),
+            # rtc_configuration=(get_twilio_turn_credentials() if not IS_LOCAL else None),
+            rtc_configuration=(
+                get_cloudflare_turn_credentials_async if not IS_LOCAL else None
+            ),
+            server_rtc_configuration=(
+                get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
+            ),
             scale=0,
             time_limit=3600,
         )
