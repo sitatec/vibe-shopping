@@ -39,7 +39,7 @@ from fastrtc import (
 
 from mcp_host.agent import VibeShoppingAgent
 from mcp_host.tts.utils import VOICES
-from mcp_host.ui import UI, ColdBootUI
+from mcp_host.ui import WelcomeUI, ColdBootUI, ImageDisplay, ProductList
 
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
@@ -74,8 +74,7 @@ def handle_audio_stream(
     audio: tuple[int, np.ndarray],
     chat_history: list[ChatCompletionMessageParam],
     voice: str | None = None,
-    displayed_products: list[dict] | None = None,
-    displayed_image: str | None = None,
+    ui_html: str | None = None,
     image_with_mask: dict | None = None,
     gradio_client: Client | None = None,
     temperature: float | None = None,
@@ -99,23 +98,24 @@ def handle_audio_stream(
         ):
             is_ui_update = len(ai_speech_or_ui_update) == 3
             if is_ui_update:
-                displayed_products, displayed_image, clear_ui = ai_speech_or_ui_update
+                product_list, image_url, clear_ui = ai_speech_or_ui_update
 
-                if clear_ui:
-                    displayed_products = None
-                    displayed_image = None
-                print(f"PRODUCTS: {displayed_products}, IMAGE: {displayed_image}, CLEAR: {clear_ui}")
-                yield AdditionalOutputs(
-                    chat_history, displayed_products, displayed_image, None
-                ) # None for resetting the input_image state
+                if product_list:
+                    ui_html = ProductList(product_list)
+                elif image_url:
+                    ui_html = ImageDisplay(image_url)
+                elif clear_ui:
+                    ui_html = WelcomeUI()
+
+                # None for resetting the input_image state
+                yield AdditionalOutputs(chat_history, ui_html, None)
                 continue
 
             # Yield the audio chunk to the WebRTC stream
             yield ai_speech_or_ui_update
 
-        yield AdditionalOutputs(
-            chat_history, displayed_products, displayed_image, None
-        )  # None for resetting the input_image state
+        # The last None for resetting the input_image state
+        yield AdditionalOutputs(chat_history, ui_html, None)
     except Exception as e:
         print(f"Error in handle_audio_stream: {e}")
         raise WebRTCError(f"An error occurred: {e}")
@@ -167,12 +167,15 @@ with gr.Blocks(
             label="Language & Voice",
             choices=list(VOICES.items()) + list(debuging_options.items()),
             value=list(VOICES.values())[0],  # Default to the first voice
-            # info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
+            info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
             scale=0,
         )
-        shopping_ui = UI(
-            products_state=displayed_products,
-            image_state=displayed_image,
+        shopping_ui = gr.HTML(
+            WelcomeUI(),
+            container=True,
+            max_height=600,
+            min_height=450,
+            padding=False,
         )
         audio_stream = WebRTC(
             label="Audio Chat",
@@ -247,8 +250,8 @@ with gr.Blocks(
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
-        lambda *args: (args[-4], args[-3], args[-2], args[-1]),  # Last four outputs
-        outputs=[chat_history, displayed_products, displayed_image, input_image],
+        lambda *args: (args[-3], args[-2], args[-1]),  # Last four outputs
+        outputs=[chat_history, shopping_ui, input_image],
         queue=False,
         show_progress="hidden",
     )

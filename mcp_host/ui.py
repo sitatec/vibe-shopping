@@ -3,10 +3,9 @@ import gradio as gr
 from utils import get_hf_space_file_url_prefix
 
 
-def UI(products_state: gr.State, image_state: gr.State):
-    ui_container = gr.HTML(
-        # Placeholder for initial UI Use the image as background with a dark overlay
-        f"""<div style="
+def WelcomeUI():
+    # Placeholder for initial UI Use the image as background with a dark overlay
+    return f"""<div style="
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -27,30 +26,12 @@ def UI(products_state: gr.State, image_state: gr.State):
                 You can talk to the AI assistant to find products, virtual try on clothes, check how products like furniture look in your home, and more.</br>
                 You can also upload an image to show to the AI assistant what you are looking for or upload images of yourself to try on clothes.
             </p>
-        </div>""",
-        container=True,
-        max_height=600,
-        min_height=450,
-        padding=False,
-    )
-
-    products_state.change(
-        fn=ProductList,
-        inputs=[products_state],
-        outputs=[ui_container],
-    )
-    image_state.change(
-        fn=ImageDisplay,
-        inputs=[image_state],
-        outputs=[ui_container],
-    )
-
-    return ui_container
+        </div>"""
 
 
 def ProductList(products: list[dict[str, str]]):
     print("Rendering product list with", len(products), "products")
-    
+
     if not products:
         return """
             <div style="
