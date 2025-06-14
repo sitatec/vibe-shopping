@@ -381,7 +381,7 @@ class VibeShoppingAgent:
                                         yield text
                             # Clear the buffer after processing
                             custom_tool_parser_buffer = ""
-                            continue
+                        continue
                     else:
                         # Check if the content contains a tool call
                         if "<tool" in delta.content or delta.content.endswith("<"):
