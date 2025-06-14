@@ -68,12 +68,13 @@ def ProductList(products: list[dict[str, str]]):
                 border-radius: 8px 8px 0 0;
             " />
             <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 50px;">
-                <h4 style="
-                    opacity: 0.6;
+                <h5 style="
+                    opacity: 0.7;
                     margin: 0 5px;
                     text-align: center;
                     text-overflow: ellipsis;
-                ">{name}</h4>
+                    -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical;
+                ">{name}</h5>
                 <p style="
                     margin: 0 8px;
                     margin-top: 0.5rem;
@@ -90,7 +91,7 @@ def ProductList(products: list[dict[str, str]]):
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 0.8rem;
         padding: 1rem 0;
-        height: 100%;
+        height: 600px;
         width: 100%;
         overflow-y: auto;
         align-items: center;
@@ -110,7 +111,7 @@ def ImageDisplay(image_url: str):
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100%;
+        height: 90vh;
         width: 100%;
     ">
         {FullSizeImage(image_url)}
