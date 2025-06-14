@@ -34,18 +34,16 @@ def UI(products_state: gr.State, image_state: gr.State):
         padding=False,
     )
 
-    if products_state.value:
-        products_state.change(
-            fn=ProductList,
-            inputs=[products_state],
-            outputs=[ui_container],
-        )
-    elif image_state.value:
-        image_state.change(
-            fn=ImageDisplay,
-            inputs=[image_state],
-            outputs=[ui_container],
-        )
+    products_state.change(
+        fn=ProductList,
+        inputs=[products_state],
+        outputs=[ui_container],
+    )
+    image_state.change(
+        fn=ImageDisplay,
+        inputs=[image_state],
+        outputs=[ui_container],
+    )
 
     return ui_container
 

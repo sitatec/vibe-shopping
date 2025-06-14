@@ -87,6 +87,7 @@ def handle_audio_stream(
         image, mask = handle_image_upload(image_with_mask)
 
         def update_ui(products, image, clear_ui):
+            print(f"Updating UI, products: {products}, image: {image}, clear_ui: {clear_ui}")
             nonlocal displayed_products, displayed_image
             if clear_ui:
                 displayed_products = None
