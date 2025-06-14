@@ -10,6 +10,7 @@ from configs import (
     API_KEY,
     VLLM_PORT,
     flashinfer_cache_vol,
+    CHAT_TEMPLATE,
 )
 
 
@@ -40,15 +41,6 @@ def serve_llm():
     import os
     import torch
 
-    # chat_template_path = "/root/chat_template.jinja"
-    # if not os.path.exists(chat_template_path):
-    #     print("Downloading chat template...")
-    #     url = "https://raw.githubusercontent.com/edwardzjl/chat-templates/refs/heads/main/qwen2_5/chat_template.jinja"
-    #     response = requests.get(url)
-    #     response.raise_for_status()
-    #     with open(chat_template_path, "w") as f:
-    #         f.write(response.text)
-
     min_pixels = 128 * 28 * 28  # min 128 tokens
     max_pixels = 340 * 28 * 28  # max 340 tokens (~512x512 image)
     
@@ -67,14 +59,10 @@ def serve_llm():
         "--enable-auto-tool-choice",
         "--limit-mm-per-prompt",
         "image=100",
+        "--chat-template",
+        CHAT_TEMPLATE,
         "--tensor-parallel-size",
         str(N_GPU),
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(VLLM_PORT),
-        "--api-key",
-        os.environ["API_KEY"],
         "--enforce-eager",
         # Minimize token usage
         "--mm-processor-kwargs",
@@ -84,6 +72,12 @@ def serve_llm():
         # '{"rope_type":"yarn","factor":2.0,"original_max_position_embeddings":32768}',
         "--max-model-len",
         "32768",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(VLLM_PORT),
+        "--api-key",
+        os.environ["API_KEY"],
     ]
 
     subprocess.Popen(cmd)
