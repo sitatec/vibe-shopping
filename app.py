@@ -104,7 +104,7 @@ def handle_audio_stream(
                 if clear_ui:
                     displayed_products = None
                     displayed_image = None
-
+                print(f"PRODUCTS: {displayed_products}, IMAGE: {displayed_image}, CLEAR: {clear_ui}")
                 yield AdditionalOutputs(
                     chat_history, displayed_products, displayed_image, None
                 ) # None for resetting the input_image state

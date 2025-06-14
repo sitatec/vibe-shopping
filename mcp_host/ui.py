@@ -49,6 +49,8 @@ def UI(products_state: gr.State, image_state: gr.State):
 
 
 def ProductList(products: list[dict[str, str]]):
+    print("Rendering product list with", len(products), "products")
+    
     if not products:
         return """
             <div style="
