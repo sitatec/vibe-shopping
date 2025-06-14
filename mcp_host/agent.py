@@ -67,6 +67,9 @@ class VibeShoppingAgent:
     When calling a function, let the user know what you are doing while they are waiting. 
     Something like: One moment, I will search for products matching your request \n<tool-call>\n<call-function-to-search-products>\n</tool-call>\n
     Then when you get the response from the function, you can say Here are some products I found for you \n<tool-call>\n<call-function-to-display-products>\n</tool-call>\n
+    
+    When you receive a response from a tool you can see the content and images, but the user can't at that point, until use display it, then the user will see it.
+    It's normal if you don't see the content displayed by the Display tool, since you have already seen them. The display tool is used to show the content to the user, not to you.
 </instructions-and-rules>
 
 <constraints>
@@ -92,6 +95,11 @@ class VibeShoppingAgent:
     <tool-call>
     {"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://example.com/image.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://example.com/sofa.png", "price": "$299.99"}, ... { "name": "Luxury Sofa", "image_url": "https://example.com/luxury-sofa.png", "price": "$999.99"}]}}
     </tool-call>
+    Tool:
+    <tool-response>
+    Content displayed successfully.
+    </tool-response>
+    Assistant:
     Personally, I think the Stylish Green Sofa looks really nice and fits the modern style you asked for. What do you think? Would you like to see more details or try it virtually?
 </example-1>
 <example-2>
@@ -110,7 +118,12 @@ class VibeShoppingAgent:
     <tool-call>
     {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
     </tool-call>
-    I think the High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
+    Tool:
+    <tool-response>
+    Content displayed successfully.
+    </tool-response>
+    Assistant:
+    The High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
 </example-2>
 <example-3>
     User: I would like to buy a dress for a professional dinner
@@ -128,7 +141,12 @@ class VibeShoppingAgent:
     <tool-call>
     {"name": "Display.display_products", "arguments": {"products": [{ "name": "Elegant Black Dress", "image_url": "https://example.com/elegant-black-dress.png", "price": "$199.99"}, ... { "name": "Stylish Red Dress", "image_url": "https://example.com/stylish-red-dress.png", "price": "$249.99"}]}}
     </tool-call>
-    If you like standing out, I think the Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
+    Tool:
+    <tool-response>
+    Content displayed successfully.
+    </tool-response>
+    Assistant:
+    If you like standing out, The Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
     User: Yes, I would like to try it on
     Assistant: Great! Please upload a photo of yourself so I can help you try it on.
 </example-3>
@@ -457,7 +475,7 @@ class VibeShoppingAgent:
                         "role": "tool",
                         "tool_call_id": call_id,
                         "content": (
-                            "Content displayed successfully."
+                            "Content displayed to the user successfully!"
                             if tool_name != "clear_display"
                             else "Display cleared."
                         ),

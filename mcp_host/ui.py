@@ -50,7 +50,17 @@ def UI(products_state: gr.State, image_state: gr.State):
 
 def ProductList(products: list[dict[str, str]]):
     if not products:
-        return gr.update(value="")
+        return """
+            <div style="
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                width: 100%;
+            ">
+                <p style="font-size: 1.2rem; text-align: center;">Empty products list. Try searching for something!</p>
+            </div>
+        """
 
     cards = ""
     for product in products:
@@ -94,7 +104,7 @@ def ProductList(products: list[dict[str, str]]):
         </div>
         """
 
-    html = f"""
+    return f"""
     <div style="
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -106,15 +116,12 @@ def ProductList(products: list[dict[str, str]]):
     </div>
     """
 
-    return gr.update(value=html)
-
 
 def ImageDisplay(image_url: str):
     if not image_url:
-        return gr.update(value="")
+        return ""
 
-    # html = FullSizeImage(image_url)
-    html = f"""
+    return f"""
     <div style="
         display: flex;
         justify-content: center;
@@ -125,8 +132,6 @@ def ImageDisplay(image_url: str):
         {FullSizeImage(image_url)}
     </div>
     """
-
-    return gr.update(value=html)
 
 
 def FullSizeImage(image_url, fit: str = "contain", border_radius=12) -> str:
