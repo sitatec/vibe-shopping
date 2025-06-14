@@ -343,7 +343,7 @@ class VibeShoppingAgent:
                             yield custom_tool_parser_buffer
                             custom_tool_parser_buffer = ""
                             continue
-                        print("Custom tool parser buffer:", custom_tool_parser_buffer)
+
                         if "</tool-call>" in custom_tool_parser_buffer:
                             # Complete tool call found, parse it
                             matches = self.tool_call_pattern.findall(
@@ -354,6 +354,7 @@ class VibeShoppingAgent:
                                     tool_call_data = json.loads(match)
                                     pending_custom_tool_calls.append(
                                         ChoiceDeltaToolCall(
+                                            id=f"custom_{len(pending_custom_tool_calls)}",
                                             index=len(pending_custom_tool_calls),
                                             function=ChoiceDeltaToolCallFunction(
                                                 name=tool_call_data["name"],
@@ -366,27 +367,30 @@ class VibeShoppingAgent:
                                 except json.JSONDecodeError as e:
                                     print(f"Error parsing tool call: {e}")
                             # yield all text content outside of tool calls
-                            for text in self.tool_call_pattern.split(
+                            parts = self.tool_call_pattern.split(
                                 custom_tool_parser_buffer
-                            ):
-                                text = text.strip()
-                                if text:
-                                    text_chunks.append(text)
-                                    yield text
+                            )
+                            for i, text in enumerate(parts):
+                                # The split parts follow the pattern of alternating text and tool calls:
+                                # # text, tool-call, text, tool-call, ... but text can be empty.
+                                if i % 2 == 0:
+                                    # This is text content outside of tool calls
+                                    text = text.strip()
+                                    if text:
+                                        text_chunks.append(text)
+                                        yield text
                             # Clear the buffer after processing
                             custom_tool_parser_buffer = ""
                             continue
                     else:
                         # Check if the content contains a tool call
-                        if (
-                            "<" in delta.content
-                            and "<tool" in delta.content
-                            or delta.content.endswith("<")
-                        ):
-                            custom_tool_parser_buffer = delta.content
+                        if "<tool" in delta.content or delta.content.endswith("<"):
+                            custom_tool_parser_buffer = delta.content[
+                                delta.content.index("<") :  # Start from the first "<"
+                            ]
                             # yield any text content before the tool call
-                            remaining_text = custom_tool_parser_buffer[
-                                : custom_tool_parser_buffer.index("<")
+                            remaining_text = delta.content[
+                                : delta.content.index("<")
                             ]
                             if remaining_text:
                                 text_chunks.append(remaining_text)
