@@ -160,8 +160,6 @@ with gr.Blocks(
     }
 
     chat_history = gr.State(value=[])
-    displayed_products = gr.State(value=[])
-    displayed_image = gr.State(value=None)
     with gr.Column(elem_id="main-container"):
         voice = gr.Dropdown(
             label="Language & Voice",
@@ -239,8 +237,7 @@ with gr.Blocks(
             audio_stream,
             chat_history,
             voice,
-            displayed_products,
-            displayed_image,
+            shopping_ui,
             input_image,
             gradio_client,
             temperature,
