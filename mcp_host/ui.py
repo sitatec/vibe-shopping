@@ -55,7 +55,7 @@ def ProductList(products: list[dict[str, str]]):
         <div style="
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 180px;
+            width: 200px;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
@@ -63,14 +63,16 @@ def ProductList(products: list[dict[str, str]]):
         ">
             <img src="{image}" alt="{name}" style="
                 width: 100%;
-                height: 150px;
-                object-fit: cover;
+                height: 160px;
+                object-fit: contain;
                 border-radius: 8px 8px 0 0;
             " />
-            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%;">
+            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 50px;">
                 <h4 style="
                     opacity: 0.6;
                     margin: 0 5px;
+                    text-align: center;
+                    text-overflow: ellipsis;
                 ">{name}</h4>
                 <p style="
                     margin: 0 8px;
@@ -85,12 +87,14 @@ def ProductList(products: list[dict[str, str]]):
     return f"""
     <div style="
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.8rem;
         padding: 1rem 0;
         height: 100%;
         width: 100%;
         overflow-y: auto;
+        align-items: center;
+        justify-items: center;
     ">
         {cards}
     </div>
