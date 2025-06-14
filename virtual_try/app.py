@@ -23,7 +23,7 @@ app = modal.App("vibe-shopping-virtual-try")
 
 @app.cls(**modal_class_config, max_containers=1)
 class VirtualTryModel:
-    @modal.web_endpoint(method="GET")
+    @modal.fastapi_endpoint(method="GET", label="health-check")
     def health_check(self) -> str:
         return "Virtual Try Model is healthy!"
 
