@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import os
+import threading
 from typing import TYPE_CHECKING, Any
+
+from utils import health_check_virtual_try_model
 
 
 IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
@@ -146,6 +149,8 @@ def set_client_for_session(request: gr.Request):
         raise WebRTCError(
             f"Inference server is not available. Status code: {health_check_response.status_code}"
         )
+    
+    threading.Thread(target=health_check_virtual_try_model).start()
 
     if not vibe_shopping_agent.clients_connected:
         vibe_shopping_agent.connect_clients()

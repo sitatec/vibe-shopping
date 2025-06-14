@@ -67,7 +67,7 @@ def ProductList(products: list[dict[str, str]]):
                 object-fit: contain;
                 border-radius: 8px 8px 0 0;
             " />
-            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 50px;">
+            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 52px;">
                 <h5 style="
                     opacity: 0.7;
                     margin: 0 5px;
@@ -90,7 +90,7 @@ def ProductList(products: list[dict[str, str]]):
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 0.8rem;
-        padding: 1rem 0;
+        padding: 0.5rem 0;
         height: 600px;
         width: 100%;
         overflow-y: auto;

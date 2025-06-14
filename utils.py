@@ -1,6 +1,8 @@
 import os
 from io import BytesIO
 from PIL import Image
+from fastrtc import WebRTCError
+import requests
 
 
 class ImageUploader:
@@ -49,3 +51,14 @@ def pil_to_bytes(image, format: str = "PNG") -> bytes:
 def get_hf_space_file_url_prefix() -> str:
     space_host = os.getenv("SPACE_HOST")
     return f"https://{space_host}/gradio_api/file="
+
+
+def health_check_virtual_try_model():
+    try:
+        virtual_try_hc_response = requests.get(
+            "https://sita-berete-3-vibe-shopping--health-check.modal.run"
+        )
+        virtual_try_hc_response.raise_for_status()
+    except Exception as e:
+        print(f"Virtual try-on model health check failed: {e}")
+        raise WebRTCError("Error: Virtual try-on server failed to start")
