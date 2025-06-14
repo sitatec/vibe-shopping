@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 IS_HF_ZERO_GPU = os.getenv("SPACE_ID", "").startswith("sitatech/")
@@ -75,6 +75,7 @@ def handle_audio_stream(
     chat_history: list[ChatCompletionMessageParam],
     voice: str | None = None,
     ui_html: str | None = None,
+    displayed_image: str | None = None,
     image_with_mask: dict | None = None,
     gradio_client: Client | None = None,
     temperature: float | None = None,
@@ -83,6 +84,7 @@ def handle_audio_stream(
 ):
     try:
         image, mask = handle_image_upload(image_with_mask)
+        displayed_image_modal = None
 
         chat_history = chat_history.copy()
         for ai_speech_or_ui_update in vibe_shopping_agent.chat(
@@ -102,20 +104,35 @@ def handle_audio_stream(
 
                 if product_list:
                     ui_html = ProductList(product_list)
+                    displayed_image_modal = Modal(visible=False)
                 elif image_url:
-                    ui_html = ImageDisplay(image_url)
+                    displayed_image = ImageDisplay(image_url)
+                    displayed_image_modal = Modal(visible=True)
                 elif clear_ui:
                     ui_html = WelcomeUI()
+                    displayed_image = ""
+                    displayed_image_modal = Modal(visible=False)
 
-                # None for resetting the input_image state
-                yield AdditionalOutputs(chat_history, ui_html, None)
+                yield AdditionalOutputs(
+                    chat_history,
+                    ui_html,
+                    displayed_image,
+                    displayed_image_modal,
+                    None,  # None for resetting the input_image state
+                )
                 continue
 
             # Yield the audio chunk to the WebRTC stream
             yield ai_speech_or_ui_update
 
-        # The last None for resetting the input_image state
-        yield AdditionalOutputs(chat_history, ui_html, None)
+        yield AdditionalOutputs(
+            chat_history,
+            ui_html,
+            displayed_image,
+            displayed_image_modal,
+            # The last None for resetting the input_image state
+            None,
+        )
     except Exception as e:
         print(f"Error in handle_audio_stream: {e}")
         raise WebRTCError(f"An error occurred: {e}")
@@ -175,6 +192,9 @@ with gr.Blocks(
             min_height=450,
             padding=False,
         )
+        with Modal(visible=False) as displayed_image_modal:
+            displayed_image = gr.HTML("")
+
         audio_stream = WebRTC(
             label="Audio Chat",
             mode="send-receive",
@@ -238,6 +258,7 @@ with gr.Blocks(
             chat_history,
             voice,
             shopping_ui,
+            displayed_image,
             input_image,
             gradio_client,
             temperature,
@@ -247,8 +268,20 @@ with gr.Blocks(
         outputs=[audio_stream],
     )
     audio_stream.on_additional_outputs(
-        lambda *args: (args[-3], args[-2], args[-1]),  # Last four outputs
-        outputs=[chat_history, shopping_ui, input_image],
+        lambda *args: (
+            args[-5],
+            args[-4],
+            args[-3],
+            args[-2],
+            args[-1],
+        ),  # Last four outputs
+        outputs=[
+            chat_history,
+            shopping_ui,
+            displayed_image,
+            displayed_image_modal,
+            input_image,
+        ],
         queue=False,
         show_progress="hidden",
     )

@@ -53,7 +53,6 @@ def ProductList(products: list[dict[str, str]]):
 
         cards += f"""
         <div style="
-            background: white;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             width: 180px;
@@ -64,24 +63,20 @@ def ProductList(products: list[dict[str, str]]):
         ">
             <img src="{image}" alt="{name}" style="
                 width: 100%;
-                height: 120px;
+                height: 150px;
                 object-fit: cover;
                 border-radius: 8px 8px 0 0;
             " />
-            <div style="width: 100%; padding: 8px;">
+            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%;">
                 <h4 style="
+                    opacity: 0.6;
                     margin: 0 5px;
-                    font-size: 1rem;
-                    font-weight: 600;
-                    text-align: left;
                 ">{name}</h4>
                 <p style="
                     margin: 0 8px;
                     margin-top: 0.5rem;
-                    color: #2c3e50;
                     font-weight: bold;
-                    font-size: 0.8rem;
-                    text-align: right;
+                    font-size: 0.82rem;
                 ">{price}</p>
             </div>
         </div>
@@ -92,8 +87,10 @@ def ProductList(products: list[dict[str, str]]):
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
         gap: 1rem;
-        margin-top: 1rem;
+        padding: 1rem 0;
         height: 100%;
+        width: 100%;
+        overflow-y: auto;
     ">
         {cards}
     </div>
