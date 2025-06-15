@@ -33,6 +33,7 @@ import numpy as np
 from PIL import Image
 from fastrtc import (
     AdditionalOutputs,
+    AlgoOptions,
     WebRTC,
     ReplyOnPause,
     get_cloudflare_turn_credentials_async,
@@ -275,7 +276,12 @@ with gr.Blocks(
             )
 
     audio_stream.stream(
-        ReplyOnPause(handle_audio_stream),
+        ReplyOnPause(
+            handle_audio_stream,
+            algo_options=AlgoOptions(
+                speech_threshold=0.2
+            )
+        ),
         inputs=[
             audio_stream,
             chat_history,
