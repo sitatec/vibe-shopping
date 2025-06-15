@@ -20,8 +20,10 @@ vllm_image = (
     .add_local_file(str(Path(__file__).resolve()), "/root/configs.py")
 )
 
-MODEL_NAME = "RedHatAI/Qwen2.5-VL-72B-Instruct-quantized.w4a16"
-MODEL_REVISION = "fa775a982552b2e44f2a12b6cdc793348cd4f1c4"
+# MODEL_NAME = "RedHatAI/Qwen2.5-VL-72B-Instruct-quantized.w4a16"
+# MODEL_REVISION = "fa775a982552b2e44f2a12b6cdc793348cd4f1c4"
+MODEL_NAME = "BCCard/Qwen2.5-VL-32B-Instruct-FP8-Dynamic"
+MODEL_REVISION = "9ee1aef586e9a8ccceaee339ffaf44676eb2092c"
 
 hf_cache_vol = modal.Volume.from_name(
     "huggingface-cache", create_if_missing=True, environment_name="vibe-shopping"
