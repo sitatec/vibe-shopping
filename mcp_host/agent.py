@@ -106,30 +106,6 @@ class VibeShoppingAgent:
     Personally, I think the Stylish Green Sofa looks really nice and fits the modern style you asked for. What do you think? Would you like to see more details or try it virtually?
 </example-1>
 <example-2>
-    User: I would like to buy a new laptop for my son's birthday, he loves gaming, can you help me find one?
-    Assistant: Oh wow, happy birthday to your son! I can definitely help you find a great laptop that he will like. Give me a moment to search for some gaming laptops.
-    <tool-call>
-    {"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 10}}
-    </tool-call>
-    Tool:
-    <tool-response>
-    <products-images-grid-here>
-    [{"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"},
-    ...
-    {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}]
-    </tool-response>
-    Assistant: I've found some awesome gaming laptops that I think your son will love:
-    <tool-call>
-    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
-    </tool-call>
-    Tool:
-    <tool-response>
-    Content displayed successfully.
-    </tool-response>
-    Assistant:
-    The High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
-</example-2>
-<example-3>
     User: I would like to buy a dress for a professional dinner
     Assistant: Sure! I can help you find a nice dress for that occasion. One second please.
     <tool-call>
@@ -174,8 +150,8 @@ class VibeShoppingAgent:
     <tool-call>
     {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-result.png"}}
     </tool-call>
-</example-3>
-<example-4>
+</example-2>
+<example-3>
     User: I would like to buy a t-shirt
     Assistant: Sure! I can help you find a nice t-shirt. One second please.
     <tool-call>
@@ -215,6 +191,32 @@ class VibeShoppingAgent:
     <tool-call>
     {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-casual-t-shirt-result.png"}}
     </tool-call>
+</example-3>
+<example-4>
+    User: I would like to buy a new laptop for my son's birthday, he loves gaming, can you help me find one?
+    Assistant: Oh wow, happy birthday to your son! I can definitely help you find a great laptop that he will like. Give me a moment to search for some gaming laptops.
+    <tool-call>
+    {"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 10}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    <products-images-grid-here>
+    [{"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"},
+    {"_id": "id2", "name": "New Gen Gaming Laptop", "brand": "NextGen", "store":"NextGen Store", "images": ["https://example.com/new-gen-gaming-laptop.png"], "price": "$1299.99"},
+    ...
+    {"_id": "id9", "name": "Gaming Laptop Pro", "brand": "ProGamer", "store":"ProGamer Store", "images": ["https://example.com/gaming-laptop-pro.png"], "price": "$1199.99"},
+    {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}]
+    </tool-response>
+    Assistant: I've found some awesome gaming laptops that I think your son will love:
+    <tool-call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    Content displayed successfully.
+    </tool-response>
+    Assistant:
+    The High-Performance Gaming Laptop is a great choice for gaming, it has a powerful GPU and a fast processor. Do you like any of these options?
 </example-4>
 """
 
