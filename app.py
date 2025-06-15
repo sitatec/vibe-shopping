@@ -262,7 +262,7 @@ with gr.Blocks(
                     )
 
                 with gr.Column():
-                    clear_history_btn = gr.Button("Clear Chat History")
+                    clear_history_btn = gr.Button("Clear Chat History", variant="primary")
                     clear_history_btn.click(
                         lambda: [],
                         inputs=[],
