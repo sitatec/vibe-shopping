@@ -76,7 +76,8 @@ class VibeShoppingAgent:
 <constraints>
     The maximum number of products you can search at once is 10, don't exceed this limit.
     Text formatting is forbidden! So make sure to only output raw plain text. Do not output markdown or emoji.
-    Always display products search results so the user can see them, not read them.
+    Always display all products search results so the user can see them, not read them.
+    When calling a function, you must refer to its description to use it correctly.
 </constraints>
 
 <example-1>
@@ -174,13 +175,6 @@ class VibeShoppingAgent:
     {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-result.png"}}
     </tool-call>
 </example-3>
-
-<virtual-try-on-notes>
-    For the example-3, since the photo the user uploaded was of them wearing pants, and masking the paints area won't be enough to apply the dress (there would be an unmasked area between the legs), the assistant asked the user to draw a mask around the area where the dress should be applied, so it can apply it correctly.
-    But if the user wanted to buy shorts and the they uploaded a photo of them wearing pants or shorts, you could use the auto-masking tool since the pants area covers the shorts area.
-    You must always refer to the tool description to understand how to use it correctly.
-</virtual-try-on-notes>
-
 <example-4>
     User: I would like to buy a t-shirt
     Assistant: Sure! I can help you find a nice t-shirt. One second please.
