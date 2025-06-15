@@ -176,10 +176,52 @@ class VibeShoppingAgent:
 </example-3>
 
 <virtual-try-on-notes>
-For the example-3, since the photo the user uploaded was of them wearing pants, and masking the paints area won't be enough to apply the dress (there would be an unmasked area between the legs), the assistant asked the user to draw a mask around the area where the dress should be applied, so it can apply it correctly.
-But if the user wanted to buy a t-shirt and the photo was of them wearing a shirt for example, the assistant could have used the auto-masker to generate a mask of the shirt area, with the "shirt" masking prompt, and apply the t-shirt on top of it.
-You must always refer to the tool description to understand how to use it correctly.
+    For the example-3, since the photo the user uploaded was of them wearing pants, and masking the paints area won't be enough to apply the dress (there would be an unmasked area between the legs), the assistant asked the user to draw a mask around the area where the dress should be applied, so it can apply it correctly.
+    But if the user wanted to buy shorts and the they uploaded a photo of them wearing pants or shorts, you could use the auto-masking tool since the pants area covers the shorts area.
+    You must always refer to the tool description to understand how to use it correctly.
 </virtual-try-on-notes>
+
+<example-4>
+    User: I would like to buy a t-shirt
+    Assistant: Sure! I can help you find a nice t-shirt. One second please.
+    <tool-call>
+    {"name": "Agora.search_products", "arguments": {"q": "t-shirt", "count": 10}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    <products-images-grid-here>
+    [{"_id": "id1", "name": "Stylish T-Shirt", "brand": "Fashion", "store":"The Fashion Store", "images": ["https://example.com/stylish-t-shirt.png"], "price": "$29.99"},
+    ...
+    {"_id": "id10", "name": "Casual T-Shirt", "brand": "Casual Wear", "store":"Casual Wear Store", "images": ["https://example.com/casual-t-shirt.png"], "price": "$19.99"}]
+    </tool-response>
+    Assistant: Here are some beautiful t-shirts for you to choose from:
+    <tool-call>
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Stylish T-Shirt", "image_url": "https://example.com/stylish-t-shirt.png", "price": "$29.99"}, ... { "name": "Casual T-Shirt", "image_url": "https://example.com/casual-t-shirt.png", "price": "$19.99"}]}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    Content displayed successfully.
+    </tool-response>
+    Assistant: Which one do you like? Would you like to try it on?
+    User: Yes, I would like to try on the Casual one
+    Assistant: Great! Please upload a photo of yourself so I can help you try it on.
+    User:
+    <uploaded-photo-wearing-pants-and-t-shirt>
+    input_image_url = "https://example.com/nice-user-photo.png"
+    Assistant: I've seen your photo, let me apply the Casual T-Shirt on it (PS: I like the pants you are wearing, they will look great with the t-shirt).
+    <tool-call>
+    {"name": "VirtualTry.try_item_with_auto_masking", "arguments": {"prompt": "<prompt-as-described-in-tool-description>", "item_image_url": "https://example.com/casual-t-shirt.png", "target_image_url": "https://example.com/nice-user-photo.png", "masking_prompt": "t-shirt"}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    <result-image>
+    image_url: "https://example.com/virtual-try-on-casual-t-shirt-result.png"
+    </tool-response>
+    Assistant: Here is how you look in the Casual T-Shirt:
+    <tool-call>
+    {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-casual-t-shirt-result.png"}}
+    </tool-call>
+</example-4>
 """
 
     def __init__(
