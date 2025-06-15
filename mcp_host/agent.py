@@ -41,13 +41,14 @@ if TYPE_CHECKING:
     )
 
 ChatOutputType = Generator[
-        # Sample rate, audio data
-        tuple[int, np.ndarray]
-        # Update the UI with a list of products or an image from url, or clear the UI
-        | tuple[list[dict[str, str]] | None, str | None, bool | None],
-        None,
-        None,
-    ]
+    # Sample rate, audio data
+    tuple[int, np.ndarray]
+    # Update the UI with a list of products or an image from url, or clear the UI
+    | tuple[list[dict[str, str]] | None, str | None, bool | None],
+    None,
+    None,
+]
+
 
 # TODO: Refactor to improve readability
 class VibeShoppingAgent:
@@ -116,7 +117,7 @@ class VibeShoppingAgent:
     <products-images-grid-here>
     [{"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"},
     ...
-    products_details: {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}]
+    {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}]
     </tool-response>
     Assistant: Here are some beautiful dresses I found for you:
     <tool-call>
@@ -209,7 +210,7 @@ class VibeShoppingAgent:
     </tool-response>
     Assistant: I've found some awesome gaming laptops that I think your son will love:
     <tool-call>
-    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, { "name": "New Gen Gaming Laptop", "image_url": "https://example.com/new-gen-gaming-laptop.png", "price": "$1299.99"}, ... { "name": "Gaming Laptop Pro", "image_url": "https://example.com/gaming-laptop-pro.png", "price": "$1199.99"}, { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
     </tool-call>
     Tool:
     <tool-response>
@@ -564,7 +565,7 @@ class VibeShoppingAgent:
                             call_id=call_id,
                             tool_name=tool_name,
                             tool_args=json.loads(tool_args) if tool_args else None,
-                        ) 
+                        )
                 print("Tool responded")
                 tool_responses.append(tool_response)
             except Exception as e:
