@@ -226,7 +226,7 @@ class VibeShoppingAgent:
 
     def __init__(
         self,
-        model_name: str = "BCCard/Qwen2.5-VL-32B-Instruct-FP8-Dynamic",
+        model_name: str = "RedHatAI/Qwen2.5-VL-72B-Instruct-quantized.w4a16",
         openai_api_key: str = os.getenv("OPENAI_API_KEY", ""),
         openai_api_base_url: str = os.getenv("OPENAI_API_BASE_URL", ""),
         image_uploader: ImageUploader = ImageUploader(),
