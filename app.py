@@ -79,6 +79,7 @@ def handle_audio_stream(
     voice: str | None = None,
     ui_html: str | None = None,
     displayed_image: str | None = None,
+    image_modal_visible: bool = False,
     image_with_mask: dict | None = None,
     gradio_client: Client | None = None,
     temperature: float | None = None,
@@ -87,8 +88,6 @@ def handle_audio_stream(
 ):
     try:
         image, mask = handle_image_upload(image_with_mask)
-        displayed_image_modal = None
-
         chat_history = chat_history.copy()
         for ai_speech_or_ui_update in vibe_shopping_agent.chat(
             user_speech=audio,
@@ -107,20 +106,21 @@ def handle_audio_stream(
 
                 if product_list:
                     ui_html = ProductList(product_list)
-                    displayed_image_modal = Modal(visible=False)
+                    image_modal_visible = False
                 elif image_url:
                     displayed_image = ImageDisplay(image_url)
-                    displayed_image_modal = Modal(visible=True)
+                    image_modal_visible = True
                 elif clear_ui:
                     ui_html = WelcomeUI()
                     displayed_image = ""
-                    displayed_image_modal = Modal(visible=False)
+                    image_modal_visible = False
 
                 yield AdditionalOutputs(
                     chat_history,
                     ui_html,
                     displayed_image,
-                    displayed_image_modal,
+                    Modal(visible=image_modal_visible),
+                    image_modal_visible,
                     None,  # None for resetting the input_image state
                 )
                 continue
@@ -132,7 +132,8 @@ def handle_audio_stream(
             chat_history,
             ui_html,
             displayed_image,
-            displayed_image_modal,
+            Modal(visible=image_modal_visible),
+            image_modal_visible,
             # The last None for resetting the input_image state
             None,
         )
@@ -149,7 +150,7 @@ def set_client_for_session(request: gr.Request):
         raise WebRTCError(
             f"Inference server is not available. Status code: {health_check_response.status_code}"
         )
-    
+
     threading.Thread(target=health_check_virtual_try_model).start()
 
     if not vibe_shopping_agent.clients_connected:
@@ -198,6 +199,10 @@ with gr.Blocks(
         )
         with Modal(visible=False) as displayed_image_modal:
             displayed_image = gr.HTML("")
+        # We need this to not reset the modal visibility when the stream output
+        # additional outputs that doesn't contain an image, this will be the
+        # default output for the modal visibility
+        image_modal_visible = gr.State(value=False)
 
         audio_stream = WebRTC(
             label="Audio Chat",
@@ -263,6 +268,7 @@ with gr.Blocks(
             voice,
             shopping_ui,
             displayed_image,
+            image_modal_visible,
             input_image,
             gradio_client,
             temperature,
@@ -273,17 +279,19 @@ with gr.Blocks(
     )
     audio_stream.on_additional_outputs(
         lambda *args: (
-            args[-5],
-            args[-4],
-            args[-3],
-            args[-2],
-            args[-1],
+            args[-6],  # chat_history
+            args[-5],  # shopping_ui
+            args[-4],  # displayed_image
+            args[-3],  # displayed_image_modal
+            args[-2],  # image_modal_visible
+            args[-1],  # input_image
         ),  # Last four outputs
         outputs=[
             chat_history,
             shopping_ui,
             displayed_image,
             displayed_image_modal,
+            image_modal_visible,
             input_image,
         ],
         queue=False,
