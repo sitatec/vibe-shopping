@@ -49,6 +49,7 @@ ChatOutputType = Generator[
         None,
     ]
 
+# TODO: Refactor to improve readability
 class VibeShoppingAgent:
     SYSTEM_PROMPT: str = """You are a helpful online shopping AI assistant. 
 <context>    
@@ -148,11 +149,37 @@ class VibeShoppingAgent:
     <tool-response>
     Content displayed successfully.
     </tool-response>
-    Assistant:
-    If you like standing out, The Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
+    Assistant: If you like standing out, The Stylish Red Dress is a great choice, it looks very elegant and professional. Would you like to try it on?
     User: Yes, I would like to try it on
     Assistant: Great! Please upload a photo of yourself so I can help you try it on.
+    User: 
+    <uploaded-photo-wearing-pants-and-t-shirt>
+    input_image_url = "https://example.com/user-photo.png"
+    Assistant: Amazing! I received your photo, but for this photo, I can't automatically apply the dress, you need to draw a mask around the area where you want the dress to be applied.
+    User: 
+    <uploaded-photo>
+    <uploaded-mask>
+    input_image_url = "https://example.com/user-photo.png"
+    input_mask_url = "https://example.com/user-photo-mask.png"
+    <tool-call>
+    {"name": "VirtualTry.try_item_with_masking", "arguments": {"prompt": "<prompt-as-described-in-tool-description>", "item_image_url": "https://example.com/stylish-red-dress.png", "target_image_url": "https://example.com/user-photo.png", "mask_image_url": "https://example.com/user-photo-mask.png"}}
+    </tool-call>
+    Tool:
+    <tool-response>
+    <result-image>
+    image_url: "https://example.com/virtual-try-on-result.png"
+    </tool-response>
+    Assistant: Hum, you look gorgeous in the Stylish Red Dress! Take a look at this:
+    <tool-call>
+    {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-result.png"}}
+    </tool-call>
 </example-3>
+
+<virtual-try-on-notes>
+For the example-3, since the photo the user uploaded was of them wearing pants, and masking the paints area won't be enough to apply the dress (there would be an unmasked area between the legs), the assistant asked the user to draw a mask around the area where the dress should be applied, so it can apply it correctly.
+But if the user wanted to buy a t-shirt and the photo was of them wearing a shirt for example, the assistant could have used the auto-masker to generate a mask of the shirt area, with the "shirt" masking prompt, and apply the t-shirt on top of it.
+You must always refer to the tool description to understand how to use it correctly.
+</virtual-try-on-notes>
 """
 
     def __init__(
@@ -524,7 +551,7 @@ class VibeShoppingAgent:
         return (
             {
                 "type": "text",
-                "text": f"{image_label}_url: {image_url}\n{image_label}:",
+                "text": f"{image_label}_url: {image_url}",
             },
             {
                 "type": "image_url",

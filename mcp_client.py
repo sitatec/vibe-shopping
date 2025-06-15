@@ -167,17 +167,16 @@ class MCPClient:
                 )
                 contents.append(
                     {
-                        "type": "text",
-                        "text": f"image_url: {image_url}\nimage:",
-                    }
-                )
-                # Put the image content after the url
-                contents.append(
-                    {
                         "type": "image_url",
                         "image_url": {
                             "url": content.data,
                         },
+                    }
+                )
+                contents.append(
+                    {
+                        "type": "text",
+                        "text": f"image_url: {image_url}",
                     }
                 )
             else:
