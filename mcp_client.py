@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     )
 
 
-from utils import ImageUploader
+from utils import ImageUploader, make_image_grid_with_index_labels
 
 
 __all__ = ["MCPClient", "AgoraMCPClient"]
@@ -243,87 +243,78 @@ class AgoraMCPClient(MCPClient):
         new_content: list[ChatCompletionContentPartParam] = []
         products: list[dict[str, Any]] = json_data["Products"]
 
-        if len(products) > 5:
-            print(f"Received {len(products)} products, limiting to 5 for context.")
-            products = products[:5]  # Limit to first 5 products
+        if len(products) > 10:
+            print(f"Received {len(products)} products, limiting to 10 for context.")
+            products = products[:10]  # Limit to first 10 products
 
-        # Check if images exist for each product and prepare the content
-        image_exists_tasks = self._event_loop.run_until_complete(
-            self._check_product_images(products)
+        products_image_bytes = self._event_loop.run_until_complete(
+            self._download_product_images(products)
+        )
+        # Instead of add each image to the content, we will add a single image
+        # grid with all the product images to reduce token usage and decrease latency
+        #  This will affect the LLM's performance but minor in the case every day objects like clothes, shoes, etc.
+        image = make_image_grid_with_index_labels(products_image_bytes)
+        new_content.append(
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": self.image_uploader.upload_image(
+                        image=image, filename=f"{call_id}.png"
+                    ),
+                },
+            }
         )
 
-        for product, image_exists in zip(products, image_exists_tasks):
-            # Remove all the fields we don't need to reduce token usage and preserver focused context.
+        # Remove all the fields we don't need to reduce token usage and preserve focused context.
+        for product in products:
             for key in self.FIELDS_TO_REMOVE:
                 product.pop(key, None)
 
-            # We add the product data first then show its image if available.
-            # The LLM will see:
-            # product_details: {...}
-            # product_image:
-            # <image_content> or <Not available message>
-            new_content.append(
-                {
-                    "type": "text",
-                    "text": f"product_details: {json.dumps(product)}\nproduct_image:",
-                }
-            )
-            if image_exists:
-                new_content.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": product["images"][0],
-                        },
-                    }
-                )
-            else:
-                new_content.append(
-                    {
-                        "type": "text",
-                        "text": f'No image available for "{product["name"]}" with _id {product.get("_id")}.',
-                    }
-                )
+        new_content.append(
+            {
+                "type": "text",
+                "text": f"Every image is labeled with its corresponding index in the products list:\n{json.dumps(products)}"
+            }
+        )
 
         return new_content
 
-    async def _check_product_images(self, products: list[dict[str, Any]]) -> list[bool]:
+    async def _download_product_images(
+        self, products: list[dict[str, Any]]
+    ) -> list[bytes | None]:
         """
-        Check if the products have images available.
+        Download the first image of each product if available.
         Args:
-            products: A list of product dictionaries to check.
-
+            products: A list of product dictionaries, each containing an "images" key with a list of image URLs.
         Returns:
-            list[bool]: A list of booleans indicating whether each product has an image.
+            list[bytes | None]: A list of image bytes for each product, or None if the image could not be downloaded.
         """
-        tasks = [self._check_product_image_exists(product) for product in products]
+        tasks = [self._download_product_image(product) for product in products]
         return await asyncio.gather(*tasks)
 
-    async def _check_product_image_exists(self, product: dict[str, Any]) -> bool:
+    async def _download_product_image(self, product: dict[str, Any]) -> bytes | None:
         """
-        Check if the product has an image available.
+        Download the first image of a product if available.
         Args:
-            product: The product dictionary to check.
-
+            product: A product dictionary containing an "images" key with a list of image URLs.
         Returns:
-            bool: True if the product has an image, False otherwise.
+            bytes | None: The image bytes if the image is successfully downloaded, None otherwise.
         """
         if "images" in product and product["images"]:
             if not self._http_session:
                 self._http_session = aiohttp.ClientSession(
-                    # We are only using this client to check if images exist with a HEAD request before sending them to the LLM.
-                    # So we can use a low timeout to reduce latency.
-                    timeout=aiohttp.ClientTimeout(total=3)
+                    timeout=aiohttp.ClientTimeout(total=5)
                 )
             try:
-                response = await self._http_session.head(
+                response = await self._http_session.get(
                     product["images"][0], allow_redirects=True
                 )
-                return response.status == 200
+                response.raise_for_status()
+                return await response.read()
             except Exception as e:
-                print(f"Error checking image URL: {e}")
-                return False
-        return False
+                print(f"Error downloading image: {e}")
+                return None
+        return None
 
     def close(self):
         if self._http_session:

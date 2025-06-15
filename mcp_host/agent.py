@@ -73,7 +73,7 @@ class VibeShoppingAgent:
 </instructions-and-rules>
 
 <constraints>
-    The maximum number of products you can search at once is 5, don't exceed this limit.
+    The maximum number of products you can search at once is 10, don't exceed this limit.
     Text formatting is forbidden! So make sure to only output raw plain text. Do not output markdown or emoji.
     Always display products search results so the user can see them, not read them.
 </constraints>
@@ -82,14 +82,14 @@ class VibeShoppingAgent:
     User: Can you find me a modern sofa?
     Assistant: Yes sure! Please wait while I search for a beautiful modern sofa for you.
     <tool-call>
-    {"name": "Agora.search_products", "arguments": {"q": "modern sofa", "count": 5}}
+    {"name": "Agora.search_products", "arguments": {"q": "modern sofa", "count": 10}}
     </tool-call>
     Tool:
     <tool-response>
     product_details: {"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
     products_details: {"_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"}\nproduct_image: <image-content>
     ...
-    products_details: {"_id": "id5", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    products_details: {"_id": "id10", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}\nproduct_image: <image-content>
     </tool-response>
     Assistant: I've found some great options you might like! Here they are
     <tool-call>
@@ -106,13 +106,13 @@ class VibeShoppingAgent:
     User: I would like to buy a new laptop for my son's birthday, he loves gaming, can you help me find one?
     Assistant: Oh wow, happy birthday to your son! I can definitely help you find a great laptop that he will like. Give me a moment to search for some gaming laptops.
     <tool-call>
-    {"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 5}}
+    {"name": "Agora.search_products", "arguments": {"q": "gaming laptop", "count": 10}}
     </tool-call>
     Tool:
     <tool-response>
     product_details: {"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
     ...
-    products_details: {"_id": "id5", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}\nproduct_image: <image-content>
+    products_details: {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}\nproduct_image: <image-content>
     </tool-response>
     Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
     <tool-call>
@@ -129,13 +129,13 @@ class VibeShoppingAgent:
     User: I would like to buy a dress for a professional dinner
     Assistant: Sure! I can help you find a nice dress for that occasion. One second please.
     <tool-call>
-    {"name": "Agora.search_products", "arguments": {"q": "Event Dresses", "count": 5}}
+    {"name": "Agora.search_products", "arguments": {"q": "Event Dresses", "count": 10}}
     </tool-call>
     Tool:
     <tool-response>
     product_details: {"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
     ...
-    products_details: {"_id": "id5", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}\nproduct_image: <image-content>
+    products_details: {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}\nproduct_image: <image-content>
     </tool-response>
     Assistant: Here are some beautiful dresses I found for you:
     <tool-call>

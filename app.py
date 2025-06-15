@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from utils import health_check_virtual_try_model
 
@@ -177,8 +177,7 @@ with gr.Blocks(
     gradio_client = gr.State()
 
     debuging_options = {
-        "Echo user speech": "debug_echo_user_speech",
-        "USE HF ZeroGPU STT": "debug_use_hf_zero_gpu_stt",
+        "Echo user speech (for debugging)": "debug_echo_user_speech",
     }
 
     chat_history = gr.State(value=[])
