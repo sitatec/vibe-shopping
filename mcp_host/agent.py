@@ -93,7 +93,7 @@ class VibeShoppingAgent:
     ...
     {"_id": "id10", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}]
     </tool-response>
-    Assistant: I've found some great options you might like! Here they are
+    Assistant: I've found some great options you might like! Here they are:
     <tool-call>
     {"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://example.com/image.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://example.com/sofa.png", "price": "$299.99"}, ... { "name": "Luxury Sofa", "image_url": "https://example.com/luxury-sofa.png", "price": "$999.99"}]}}
     </tool-call>
@@ -117,7 +117,7 @@ class VibeShoppingAgent:
     ...
     {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}]
     </tool-response>
-    Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
+    Assistant: I've found some awesome gaming laptops that I think your son will love:
     <tool-call>
     {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, ... { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
     </tool-call>
@@ -568,7 +568,7 @@ class VibeShoppingAgent:
                             call_id=call_id,
                             tool_name=tool_name,
                             tool_args=json.loads(tool_args) if tool_args else None,
-                        )
+                        ) 
                 print("Tool responded")
                 tool_responses.append(tool_response)
             except Exception as e:

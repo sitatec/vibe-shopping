@@ -192,6 +192,14 @@ with gr.Blocks(
             info="The AI will always respond in the language you spoke to it. So make sure to speak in the language of the selected voice.",
             scale=0,
         )
+        with gr.Accordion(open=False, label="Important Notes"):
+            gr.Markdown(
+                "1. This is a demo hacked together in ~10 days, so expect some bugs\n"
+                "2. The demo is powered by a quantized **Qwen-2.5VL 72 Billion parameters** model and is running on a single H100, so expect some delays especially when displaying many items like product search results.\n"
+                "3. The virtual try-on model is powered by a fine-tuned flux-fill combined with auto-masking. The model was exclusively trained on clothing with white background, but I made some adjustments that should generalize but the results may not be perfect for all items.\n"
+                "4. This demo was made possible thanks to the generous **250$ in compute credits** provided by [Modal](modal.com) and 1 month of Pro subscription from [HuggingFace](huggingface.co) for the MCP Hackathon.\n"
+                "5. If by the time you see this demo the credits are exhausted, you can still clone the repo and run it yourself, let me know in the[ community tab of the demo](https://huggingface.co/spaces/sitatech/vibe-shopping/discussions) if you need help with that, I will be happy to assist you.\n"
+            )
         shopping_ui = gr.HTML(
             WelcomeUI(),
             container=True,
@@ -248,7 +256,7 @@ with gr.Blocks(
                         label="Top P",
                         minimum=0.0,
                         maximum=1.0,
-                        value=0.9,
+                        value=0.8,
                         step=0.1,
                     )
 
