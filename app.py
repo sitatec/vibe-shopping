@@ -252,6 +252,14 @@ with gr.Blocks(
                         step=0.1,
                     )
 
+                with gr.Column():
+                    clear_history_btn = gr.Button("Clear Chat History")
+                    clear_history_btn.click(
+                        lambda: [],
+                        inputs=[],
+                        outputs=chat_history,
+                    )
+
             system_prompt = gr.Textbox(
                 label="System Prompt",
                 value=VibeShoppingAgent.SYSTEM_PROMPT,
