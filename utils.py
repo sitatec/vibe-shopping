@@ -28,6 +28,7 @@ class ImageUploader:
 
         unique_filename = f"{os.urandom(8).hex()}_{filename}"
         file_path = f"/tmp/vibe-shopping-public/{unique_filename}"
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "wb") as f:
             f.write(image)
 
