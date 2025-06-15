@@ -294,4 +294,4 @@ with gr.Blocks(
         ColdBootUI()
 
     vibe_shopping_app.load(set_client_for_session, None, [gradio_client, modal])
-    vibe_shopping_app.queue().launch()
+    vibe_shopping_app.queue().launch(allowed_paths=["/tmp/vibe-shopping-public"])

@@ -27,7 +27,7 @@ class ImageUploader:
             image = pil_to_bytes(image)
 
         unique_filename = f"{os.urandom(8).hex()}_{filename}"
-        file_path = f"/tmp/{unique_filename}"
+        file_path = f"/tmp/vibe-shopping-public/{unique_filename}"
         with open(file_path, "wb") as f:
             f.write(image)
 
