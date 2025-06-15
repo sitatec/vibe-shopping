@@ -294,7 +294,6 @@ with gr.Blocks(
             image_modal_visible,
             input_image,
         ],
-        queue=False,
         show_progress="hidden",
     )
 

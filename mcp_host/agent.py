@@ -86,10 +86,11 @@ class VibeShoppingAgent:
     </tool-call>
     Tool:
     <tool-response>
-    product_details: {"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"}\nproduct_image: <image-content>
-    products_details: {"_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"}\nproduct_image: <image-content>
+    <products-images-grid-here>
+    [{"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"},
+    {"_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"}
     ...
-    products_details: {"_id": "id10", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    {"_id": "id10", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}]
     </tool-response>
     Assistant: I've found some great options you might like! Here they are
     <tool-call>
@@ -110,9 +111,10 @@ class VibeShoppingAgent:
     </tool-call>
     Tool:
     <tool-response>
-    product_details: {"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"}\nproduct_image: <image-content>
+    <products-images-grid-here>
+    [{"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"},
     ...
-    products_details: {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}\nproduct_image: <image-content>
+    {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}]
     </tool-response>
     Assistant: I've found some awesome gaming laptops that I think your son will love! Here they are
     <tool-call>
@@ -133,9 +135,10 @@ class VibeShoppingAgent:
     </tool-call>
     Tool:
     <tool-response>
-    product_details: {"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"}\nproduct_image: <image-content>
+    <products-images-grid-here>
+    [{"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"},
     ...
-    products_details: {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}\nproduct_image: <image-content>
+    products_details: {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}]
     </tool-response>
     Assistant: Here are some beautiful dresses I found for you:
     <tool-call>
