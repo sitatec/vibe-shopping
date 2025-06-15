@@ -67,12 +67,12 @@ def ProductList(products: list[dict[str, str]]):
                 object-fit: contain;
                 border-radius: 8px 8px 0 0;
             " />
-            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 52px;">
+            <div style="width: 100%; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 90px;">
                 <h5 style="
                     opacity: 0.7;
                     margin: 0 5px;
                     text-align: center;
-                    text-overflow: ellipsis;
+                    overflow: hidden;
                     -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical;
                 ">{name}</h5>
                 <p style="

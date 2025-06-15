@@ -67,8 +67,12 @@ def handle_image_upload(
 
         # Convert mask to a binary mask (white for masked area, black for unmasked)
         mask_array = np.array(mask)
-        is_black = np.all(mask_array < 10, axis=2)
-        mask = Image.fromarray(((~is_black) * 255).astype(np.uint8))
+        # If the whole mask is black, we can assume no mask was drawn
+        if np.all(mask_array < 10):
+            mask = None
+        else:
+            is_black = np.all(mask_array < 10, axis=2)
+            mask = Image.fromarray(((~is_black) * 255).astype(np.uint8))
 
     return image, mask
 
