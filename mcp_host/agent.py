@@ -90,14 +90,11 @@ class VibeShoppingAgent:
     Tool:
     <tool-response>
     <products-images-grid-here>
-    [{"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://example.com/image.png"], "price": "29$"},
-    {"_id": "id2", "name": "Stylish Green Sofa", "images": ["https://example.com/sofa.png"], "price": "$299.99"}
-    ...
-    {"_id": "id10", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://example.com/luxury-sofa.png"], "price": "$999.99"}]
+    [{"_id": "id1", "name": "Sofa", "brand": "Modernism", "store":"The Modernism Store", "images": ["https://shopify.com/cdn/fs464fg-sfs464GS.png"], "price": "29$"}, {"_id": "id2", "name": "Stylish Green Sofa", "images": ["https://shopify.com/images/67453575/green-sofa.png"], "price": "$299.99"}, ... {"_id": "id10", "name": "Luxury Sofa", "brand": "Luxury Furniture", "store":"The Luxury Furniture Store", "images": ["https://amazon.com/luxiry-furniture/256353/luxury-sofa.png"], "price": "$999.99"}]
     </tool-response>
     Assistant: I've found some great options you might like! Here they are:
     <tool-call>
-    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://example.com/image.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://example.com/sofa.png", "price": "$299.99"}, ... { "name": "Luxury Sofa", "image_url": "https://example.com/luxury-sofa.png", "price": "$999.99"}]}}
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Sofa", "image_url": "https://shopify.com/cdn/fs464fg-sfs464GS.png", "price": "29$"}, { "name": "Stylish Green Sofa", "image_url": "https://shopify.com/images/67453575/green-sofa.png", "price": "$299.99"}, ... { "name": "Luxury Sofa", "image_url": "https://amazon.com/luxiry-furniture/256353/luxury-sofa.png", "price": "$999.99"}]}}
     </tool-call>
     Tool:
     <tool-response>
@@ -117,11 +114,11 @@ class VibeShoppingAgent:
     <products-images-grid-here>
     [{"_id": "id1", "name": "Elegant Black Dress", "brand": "Elegance", "store":"The Elegance Store", "images": ["https://example.com/elegant-black-dress.png"], "price": "$199.99"},
     ...
-    {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://example.com/stylish-red-dress.png"], "price": "$249.99"}]
+    {"_id": "id10", "name": "Stylish Red Dress",  "brand": "Dress Mania", "store":"Dress Mania", "images": ["https://cdn.spotify.com/536322sf-GDf64/stylish-red-dress.png"], "price": "$249.99"}]
     </tool-response>
     Assistant: Here are some beautiful dresses I found for you:
     <tool-call>
-    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Elegant Black Dress", "image_url": "https://example.com/elegant-black-dress.png", "price": "$199.99"}, ... { "name": "Stylish Red Dress", "image_url": "https://example.com/stylish-red-dress.png", "price": "$249.99"}]}}
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Elegant Black Dress", "image_url": "https://example.com/elegant-black-dress.png", "price": "$199.99"}, ... { "name": "Stylish Red Dress", "image_url": "https://cdn.spotify.com/536322sf-GDf64/stylish-red-dress.png", "price": "$249.99"}]}}
     </tool-call>
     Tool:
     <tool-response>
@@ -132,24 +129,24 @@ class VibeShoppingAgent:
     Assistant: Great! Please upload a photo of yourself so I can help you try it on.
     User: 
     <uploaded-photo-wearing-pants-and-t-shirt>
-    input_image_url = "https://example.com/user-photo.png"
+    input_image_url = "https://vibe-shopping.com/user-media/01.png"
     Assistant: Amazing! I received your photo, but for this photo, I can't automatically apply the dress, you need to draw a mask around the area where you want the dress to be applied.
     User: 
     <uploaded-photo>
     <uploaded-mask>
-    input_image_url = "https://example.com/user-photo.png"
-    input_mask_url = "https://example.com/user-photo-mask.png"
+    input_image_url = "https://vibe-shopping.com/user-media/098.png"
+    input_mask_url = "https://vibe-shopping.com/user-media/0438.png"
     <tool-call>
-    {"name": "VirtualTry.try_item_with_masking", "arguments": {"prompt": "<prompt-as-described-in-tool-description>", "item_image_url": "https://example.com/stylish-red-dress.png", "target_image_url": "https://example.com/user-photo.png", "mask_image_url": "https://example.com/user-photo-mask.png"}}
+    {"name": "VirtualTry.try_item_with_masking", "arguments": {"prompt": "<prompt-as-described-in-tool-description>", "item_image_url": "https://cdn.spotify.com/536322sf-GDf64/stylish-red-dress.png", "target_image_url": "https://vibe-shopping.com/user-media/098.png", "mask_image_url": "https://vibe-shopping.com/user-media/0438.png"}}
     </tool-call>
     Tool:
     <tool-response>
     <result-image>
-    image_url: "https://example.com/virtual-try-on-result.png"
+    image_url: "https://vibe-shopping.com/images/virtual-try-on-result.png"
     </tool-response>
     Assistant: Hum, you look gorgeous in the Stylish Red Dress! Take a look at this:
     <tool-call>
-    {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-result.png"}}
+    {"name": "Display.display_image", "arguments": {"image_url": "https://vibe-shopping.com/images/virtual-try-on-result.png"}}
     </tool-call>
 </example-2>
 <example-3>
@@ -161,13 +158,11 @@ class VibeShoppingAgent:
     Tool:
     <tool-response>
     <products-images-grid-here>
-    [{"_id": "id1", "name": "Stylish T-Shirt", "brand": "Fashion", "store":"The Fashion Store", "images": ["https://example.com/stylish-t-shirt.png"], "price": "$29.99"},
-    ...
-    {"_id": "id10", "name": "Casual T-Shirt", "brand": "Casual Wear", "store":"Casual Wear Store", "images": ["https://example.com/casual-t-shirt.png"], "price": "$19.99"}]
+    [{"_id": "id1", "name": "Stylish T-Shirt", "brand": "Fashion", "store":"The Fashion Store", "images": ["https://thefashionstore.com/cdn/images/faf436.png"], "price": "$29.99"}, ... {"_id": "id10", "name": "Casual T-Shirt", "brand": "Casual Wear", "store":"Casual Wear Store", "images": ["https://example.com/casual-t-shirt.png"], "price": "$19.99"}]
     </tool-response>
     Assistant: Here are some beautiful t-shirts for you to choose from:
     <tool-call>
-    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Stylish T-Shirt", "image_url": "https://example.com/stylish-t-shirt.png", "price": "$29.99"}, ... { "name": "Casual T-Shirt", "image_url": "https://example.com/casual-t-shirt.png", "price": "$19.99"}]}}
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Stylish T-Shirt", "image_url": "https://thefashionstore.com/cdn/images/faf436.png", "price": "$29.99"}, ... { "name": "Casual T-Shirt", "image_url": "https://example.com/casual-t-shirt.png", "price": "$19.99"}]}}
     </tool-call>
     Tool:
     <tool-response>
@@ -186,11 +181,11 @@ class VibeShoppingAgent:
     Tool:
     <tool-response>
     <result-image>
-    image_url: "https://example.com/virtual-try-on-casual-t-shirt-result.png"
+    image_url: "https://website.com/virtual-try-on-casual-t-shirt-result.png"
     </tool-response>
     Assistant: Here is how you look in the Casual T-Shirt:
     <tool-call>
-    {"name": "Display.display_image", "arguments": {"image_url": "https://example.com/virtual-try-on-casual-t-shirt-result.png"}}
+    {"name": "Display.display_image", "arguments": {"image_url": "https://website.com/virtual-try-on-casual-t-shirt-result.png"}}
     </tool-call>
 </example-3>
 <example-4>
@@ -202,15 +197,15 @@ class VibeShoppingAgent:
     Tool:
     <tool-response>
     <products-images-grid-here>
-    [{"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://example.com/gaming-laptop.png"], "price": "$999.99"},
-    {"_id": "id2", "name": "New Gen Gaming Laptop", "brand": "NextGen", "store":"NextGen Store", "images": ["https://example.com/new-gen-gaming-laptop.png"], "price": "$1299.99"},
+    [{"_id": "id1", "name": "Gaming Laptop", "brand": "GamerLand", "store":"The GamerLand Store", "images": ["https://ebay.com/4352/assets/gaming-laptop.png"], "price": "$999.99"},
+    {"_id": "id2", "name": "New Gen Gaming Laptop", "brand": "NextGen", "store":"NextGen Store", "images": ["https://nextgen.com/new-gen-gaming-laptop.png"], "price": "$1299.99"},
     ...
-    {"_id": "id9", "name": "Gaming Laptop Pro", "brand": "ProGamer", "store":"ProGamer Store", "images": ["https://example.com/gaming-laptop-pro.png"], "price": "$1199.99"},
-    {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://example.com/high-performance-laptop.png"], "price": "$1499.99"}]
+    {"_id": "id9", "name": "Gaming Laptop Pro", "brand": "ProGamer", "store":"ProGamer Store", "images": ["https://cdn.spotify.com/2463/f36eas433"], "price": "$1199.99"},
+    {"_id": "id10", "name": "High-Performance Gaming Laptop", "brand": "High-Performance", "store":"High-Performance", "images": ["https://cdn.spotify.com/fs25a/img/high-performance"], "price": "$1499.99"}]
     </tool-response>
     Assistant: I've found some awesome gaming laptops that I think your son will love:
     <tool-call>
-    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://example.com/gaming-laptop.png", "price": "$999.99"}, { "name": "New Gen Gaming Laptop", "image_url": "https://example.com/new-gen-gaming-laptop.png", "price": "$1299.99"}, ... { "name": "Gaming Laptop Pro", "image_url": "https://example.com/gaming-laptop-pro.png", "price": "$1199.99"}, { "name": "High-Performance Gaming Laptop", "image_url": "https://example.com/high-performance-laptop.png", "price": "$1499.99"}]}}
+    {"name": "Display.display_products", "arguments": {"products": [{ "name": "Gaming Laptop", "image_url": "https://ebay.com/4352/assets/gaming-laptop.png", "price": "$999.99"}, { "name": "New Gen Gaming Laptop", "image_url": "https://nextgen.com/new-gen-gaming-laptop.png", "price": "$1299.99"}, ... { "name": "Gaming Laptop Pro", "image_url": "https://cdn.spotify.com/2463/f36eas433", "price": "$1199.99"}, { "name": "High-Performance Gaming Laptop", "image_url": "https://cdn.spotify.com/fs25a/img/high-performance", "price": "$1499.99"}]}}
     </tool-call>
     Tool:
     <tool-response>
