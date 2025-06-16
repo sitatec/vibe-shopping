@@ -59,7 +59,7 @@ def try_item_with_masking(
     target_image_bytes = requests.get(target_image_url).content
     mask_image_bytes = requests.get(mask_image_url).content
 
-    result_image_bytes: bytes = virtual_try_model().try_it(
+    result_image_bytes: bytes = virtual_try_model().try_it.remote(
         prompt=prompt,
         image_bytes=target_image_bytes,
         item_to_try_bytes=item_image_bytes,
@@ -104,7 +104,7 @@ def try_item_with_auto_masking(
     target_image_bytes = requests.get(target_image_url).content
     virtual_try = virtual_try_model()
 
-    result_image_bytes: bytes = virtual_try.try_it(
+    result_image_bytes: bytes = virtual_try.try_it.remote(
         prompt=prompt,
         image_bytes=target_image_bytes,
         item_to_try_bytes=item_image_bytes,
