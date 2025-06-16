@@ -265,7 +265,14 @@ class VibeShoppingAgent:
         # self.fewsats_client.connect_to_server(
         #     "env", [f"FEWSATS_API_KEY={fewsats_api_key}", "uvx", "fewsats-mcp"]
         # )
-        self.virtual_try_client.connect_to_server("python", ["./mcp_server.py"])
+        self.virtual_try_client.connect_to_server(
+            "python",
+            ["./mcp_server.py"],
+            env={
+                "MODAL_TOKEN_SECRET": os.getenv("MODAL_TOKEN_SECRET", ""),
+                "MODAL_TOKEN_ID": os.getenv("MODAL_TOKEN_ID", ""),
+            },
+        )
 
         self.tools = (
             self.display_tool
