@@ -18,7 +18,7 @@ def virtual_try_model():
     global _virtual_try_model
     if _virtual_try_model is None:
         virtual_try_model_class = modal.Cls.from_name(
-            "vibe-shopping",
+            "vibe-shopping-virtual-try",
             "VirtualTryModel",
             environment_name="vibe-shopping",
         )
