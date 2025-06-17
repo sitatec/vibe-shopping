@@ -191,7 +191,7 @@ with gr.Blocks(
                 "1. This is a demo hacked together in ~10 days, so it may not handle well all the edge cases.\n"
                 "2. The demo is powered by a quantized **Qwen-2.5VL 72 Billion parameters** model and is running on a **single H100**, so **expect some delays** especially when displaying many items like product search results.\n"
                 "3. The virtual try-on model is powered by a fine-tuned flux-fill combined with auto-masking. The model was exclusively trained on clothing with white background, but I made some adjustments that should generalize but the results may not be perfect for all items.\n"
-                "4. Unless you are in very quiet place, I recommend you muting yourself by disabling the mic when you are done speaking (when waiting for or listening to the AI), otherwise the AI may pickup some background voices or even sometimes background noises that may break the flow of your conversation.\n"
+                "4. Unless you are in very quiet place, I recommend you muting yourself by disabling the mic when you are done speaking (when waiting for or listening to the AI), otherwise the AI may pickup some background voices or even sometimes background noises that may break the flow of your conversation. Also, avoid making long pauses when speaking, otherwise the AI will think you are done speaking and start answering (This can be adjusted if you fork the repo).\n"
                 "5. This demo was made possible thanks to the generous **250$ in compute credits** provided by [Modal](modal.com) and 1 month of Pro subscription from [HuggingFace](huggingface.co).\n"
                 "6. If by the time you see this demo the credits are exhausted, you can still clone the repo and run it yourself, let me know in the [community tab of the demo](https://huggingface.co/spaces/sitatech/vibe-shopping/discussions) if you need help with that, I will be happy to assist you.\n"
             )
@@ -280,7 +280,7 @@ with gr.Blocks(
         ReplyOnPause(
             handle_audio_stream,
             algo_options=AlgoOptions(
-                speech_threshold=0.2
+                speech_threshold=0.3
             )
         ),
         inputs=[
