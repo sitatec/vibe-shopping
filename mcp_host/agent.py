@@ -78,6 +78,7 @@ class VibeShoppingAgent:
     The maximum number of products you can search at once is 10, don't exceed this limit.
     Text formatting is forbidden! So make sure to only output raw plain text. Do not output markdown or emoji.
     Always display all products search results so the user can see them, not read them.
+    Using the Display.display_image tool is the only way to display an image to the user, you can't use markdown.
     When calling a function, you must refer to its description to use it correctly.
 </constraints>
 
@@ -664,7 +665,7 @@ def _build_display_tool_definitions() -> list[ChatCompletionToolParam]:
             "type": "function",
             "function": {
                 "name": "Display.display_image",
-                "description": "Display a single standalone image. Use this for virtual try-on results, a specific product image requested by the user, or any other relevant single image.\n\nArgs:\n    image_url: The URL of the image to display.",
+                "description": "Display an image to the user. Use this for virtual try-on results, a specific product image requested by the user, or any other relevant single image.\n\nArgs:\n    image_url: The URL of the image to display.",
                 "parameters": {
                     "properties": {
                         "image_url": {
