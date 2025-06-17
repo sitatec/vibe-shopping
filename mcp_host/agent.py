@@ -142,12 +142,12 @@ class VibeShoppingAgent:
     </tool-call>
     Tool:
     <tool-response>
-    <result-image>
-    image_url: "https://vibe-shopping.com/images/virtual-try-on-result.png"
+    <image-content>
+    image_url: "https://vibe-shopping.com/images/63fae2Tf.web"
     </tool-response>
     Assistant: Hum, you look gorgeous in the Stylish Red Dress! Take a look at this:
     <tool-call>
-    {"name": "Display.display_image", "arguments": {"image_url": "https://vibe-shopping.com/images/virtual-try-on-result.png"}}
+    {"name": "Display.display_image", "arguments": {"image_url": "https://vibe-shopping.com/images/63fae2Tf.web"}}
     </tool-call>
 </example-2>
 <example-3>
@@ -181,12 +181,12 @@ class VibeShoppingAgent:
     </tool-call>
     Tool:
     <tool-response>
-    <result-image>
-    image_url: "https://website.com/virtual-try-on-casual-t-shirt-result.png"
+    <image-content>
+    image_url: "https://website.com/cdn/images/aebffac.png"
     </tool-response>
     Assistant: Here is how you look in the Casual T-Shirt:
     <tool-call>
-    {"name": "Display.display_image", "arguments": {"image_url": "https://website.com/virtual-try-on-casual-t-shirt-result.png"}}
+    {"name": "Display.display_image", "arguments": {"image_url": "https://website.com/cdn/images/aebffac.png"}}
     </tool-call>
 </example-3>
 <example-4>
