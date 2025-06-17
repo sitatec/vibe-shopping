@@ -169,7 +169,7 @@ class MCPClient:
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": content.data,
+                            "url": image_url,
                         },
                     }
                 )
