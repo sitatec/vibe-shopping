@@ -150,3 +150,24 @@ def ColdBootUI():
         </div>
         """,
     )
+
+def EndOfDemo():
+    return gr.HTML(
+        """
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            text-align: center;
+        ">
+            <h2>The free demo period is over :(</h2>
+            <p style="font-size: 1.2rem; margin-top: 16px;">
+                If you still want to try it out, you can clone the repo and run it yourself.</br>
+                If you need any help, feel free to ask in the community tab in the huggingface space.
+            </p>
+        </div>
+        """,
+    )

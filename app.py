@@ -38,13 +38,12 @@ from fastrtc import (
     ReplyOnPause,
     get_cloudflare_turn_credentials_async,
     get_cloudflare_turn_credentials,
-    get_twilio_turn_credentials,
     WebRTCError,
 )
 
 from mcp_host.agent import VibeShoppingAgent
 from mcp_host.tts.utils import VOICES
-from mcp_host.ui import WelcomeUI, ColdBootUI, ImageDisplay, ProductList
+from mcp_host.ui import EndOfDemo, WelcomeUI, ColdBootUI, ImageDisplay, ProductList
 
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
@@ -147,32 +146,30 @@ def handle_audio_stream(
 
 
 def set_client_for_session(request: gr.Request):
-    health_check_response = requests.get(
-        os.environ["OPENAI_API_BASE_URL"].replace("/v1", "/health")
-    )
-    if health_check_response.status_code != 200:
-        raise WebRTCError(
-            f"Inference server is not available. Status code: {health_check_response.status_code}"
-        )
+    # health_check_response = requests.get(
+    #     os.environ["OPENAI_API_BASE_URL"].replace("/v1", "/health")
+    # )
+    # if health_check_response.status_code != 200:
+    #     raise WebRTCError(
+    #         f"Inference server is not available. Status code: {health_check_response.status_code}"
+    #     )
 
-    threading.Thread(target=health_check_virtual_try_model).start()
+    # threading.Thread(target=health_check_virtual_try_model).start()
 
     if not vibe_shopping_agent.clients_connected:
         vibe_shopping_agent.connect_clients()
 
     if IS_HF_ZERO_GPU:
         # No need to set client for HF Zero GPU, we will run tts & stt inference on the gpu
-        return None, Modal(visible=False)
+        return None
 
     if "x-ip-token" not in request.headers:
         # Probably running in a local environment
-        return Client("sitatech/Kokoro-TTS"), Modal(visible=False)
+        return Client("sitatech/Kokoro-TTS")
 
     x_ip_token = request.headers["x-ip-token"]
 
-    return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token}), Modal(
-        visible=False
-    )
+    return Client("sitatech/Kokoro-TTS", headers={"X-IP-Token": x_ip_token})
 
 
 with gr.Blocks(
@@ -218,13 +215,12 @@ with gr.Blocks(
             mode="send-receive",
             modality="audio",
             button_labels={"start": "Start Vibe Shopping"},
-            rtc_configuration=(get_twilio_turn_credentials() if not IS_LOCAL else None),
-            # rtc_configuration=(
-            #     get_cloudflare_turn_credentials_async if not IS_LOCAL else None
-            # ),
-            # server_rtc_configuration=(
-            #     get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
-            # ),
+            rtc_configuration=(
+                get_cloudflare_turn_credentials_async if not IS_LOCAL else None
+            ),
+            server_rtc_configuration=(
+                get_cloudflare_turn_credentials(ttl=360_000) if not IS_LOCAL else None
+            ),
             scale=0,
             time_limit=3600,
         )
@@ -316,8 +312,9 @@ with gr.Blocks(
         show_progress="hidden",
     )
 
-    with Modal(visible=True, allow_user_close=False) as modal:
-        ColdBootUI()
+    with Modal(visible=True, allow_user_close=True) as modal:
+        # ColdBootUI()
+        EndOfDemo()
 
-    vibe_shopping_app.load(set_client_for_session, None, [gradio_client, modal])
+    vibe_shopping_app.load(set_client_for_session, None, [gradio_client])
     vibe_shopping_app.queue().launch(allowed_paths=["/tmp/vibe-shopping-public/"])
