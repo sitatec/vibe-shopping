@@ -15,11 +15,11 @@ tags:
 
 # Vibe Shopping
 
-**You may face cold-start which can take around 2-5 minutes, if you remain inactive for more than 5 minutes, your next interaction may also face cold-start. After a cold start you may need to reload the page, I will add**
+[![](https://github.com/user-attachments/assets/a445d974-7ee0-411b-a33b-e865c1c9e7bd)](https://www.youtube.com/watch?v=tSkny9_AjQs)
 
 Vibe Shopping is an AI-powered clickless shopping experience that allows users to virtually try on clothes and accessories.
 
-It uses Qwen-2.5-VL-32B hosted on modal as the orchestrer, it as access to 3 MCP servers:
+It uses Qwen-2.5-VL-72B hosted on modal as the orchestrer, it as access to 3 MCP servers:
 
 - [agora-mcp](https://github.com/Fewsats/agora-mcp)
 - [fewsats-mcp](https://github.com/Fewsats/fewsats-mcp)
@@ -27,4 +27,4 @@ It uses Qwen-2.5-VL-32B hosted on modal as the orchestrer, it as access to 3 MCP
 
 The virtual try on MCP uses [Flux-Fill](https://huggingface.co/black-forest-labs/FLUX.1-Fill-dev) combined with automatic masking, the model is hosted on modal.
 
-Better docs comming soon with video.
+Better docs comming soon.
